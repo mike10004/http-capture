@@ -1,0 +1,2 @@
+Application that starts a proxy server that captures traffic from
+HTTP requests and responses.
