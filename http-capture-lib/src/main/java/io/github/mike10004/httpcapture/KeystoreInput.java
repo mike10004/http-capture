@@ -10,12 +10,13 @@ public interface KeystoreInput {
 
     ByteSource getBytes();
     String getPassword();
+    String getPrivateKeyAlias();
 
-    static KeystoreInput wrap(byte[] bytes, String password) {
-        return wrap(ByteSource.wrap(bytes), password);
+    static KeystoreInput wrap(byte[] bytes, String password, String privateKeyAlias) {
+        return wrap(ByteSource.wrap(bytes), password, privateKeyAlias);
     }
 
-    static KeystoreInput wrap(ByteSource bytes, String password) {
+    static KeystoreInput wrap(ByteSource bytes, String password, String privateKeyAlias) {
         requireNonNull(bytes);
         return new KeystoreInput() {
             @Override
@@ -27,12 +28,18 @@ public interface KeystoreInput {
             public String getPassword() {
                 return password;
             }
+
+            @Override
+            public String getPrivateKeyAlias() {
+                return privateKeyAlias;
+            }
         };
     }
 
     default KeystoreInput copyFrozen() throws IOException {
         byte[] bytes = getBytes().read();
         String pw = getPassword();
+        String privateKeyAlias = getPrivateKeyAlias();
         return new KeystoreInput() {
             @Override
             public ByteSource getBytes() {
@@ -42,6 +49,11 @@ public interface KeystoreInput {
             @Override
             public String getPassword() {
                 return pw;
+            }
+
+            @Override
+            public String getPrivateKeyAlias() {
+                return privateKeyAlias;
             }
         };
     }

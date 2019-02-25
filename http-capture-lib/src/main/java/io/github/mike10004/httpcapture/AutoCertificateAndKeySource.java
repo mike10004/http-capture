@@ -19,6 +19,7 @@ import java.util.Objects;
 import java.util.Random;
 
 import static com.google.common.base.Preconditions.checkState;
+import static java.util.Objects.requireNonNull;
 
 /**
  * Auto-generating certificate and key source.
@@ -27,12 +28,16 @@ public class AutoCertificateAndKeySource implements CertificateAndKeySource, jav
 
     private static final Logger log = LoggerFactory.getLogger(AutoCertificateAndKeySource.class);
 
+    public static final String KEYSTORE_TYPE = "PKCS12";
+    private static final String DEFAULT_KEYSTORE_PRIVATE_KEY_ALIAS = "key";
+
     private volatile MemoryKeyStoreCertificateSource onDemandSource;
     private volatile boolean closed;
     private transient final Object generationLock = new Object();
 
     private final Path scratchDir;
     private final Random random;
+    private final String privateKeyAlias;
 
     @SuppressWarnings("unused")
     public AutoCertificateAndKeySource(Path scratchDir) {
@@ -41,8 +46,18 @@ public class AutoCertificateAndKeySource implements CertificateAndKeySource, jav
 
     @VisibleForTesting
     protected AutoCertificateAndKeySource(Path scratchDir, Random random) {
+        this(scratchDir, DEFAULT_KEYSTORE_PRIVATE_KEY_ALIAS, random);
+    }
+
+    @VisibleForTesting
+    protected AutoCertificateAndKeySource(Path scratchDir, String privateKeyAlias) {
+        this(scratchDir, privateKeyAlias, new Random());
+    }
+
+    protected AutoCertificateAndKeySource(Path scratchDir, String privateKeyAlias, Random random) {
         this.scratchDir = scratchDir;
         this.random = random;
+        this.privateKeyAlias = privateKeyAlias;
     }
 
     @SuppressWarnings("RedundantThrows")
@@ -70,7 +85,7 @@ public class AutoCertificateAndKeySource implements CertificateAndKeySource, jav
                     random.nextBytes(bytes);
                     String password = Base64.getEncoder().encodeToString(bytes);
                     keystorePasswordGenerated(password);
-                    onDemandSource = generate(password);
+                    onDemandSource = generate(password, privateKeyAlias);
                 } catch (IOException e) {
                     throw new CertificateGenerationException(e);
                 }
@@ -100,9 +115,6 @@ public class AutoCertificateAndKeySource implements CertificateAndKeySource, jav
         }
     }
 
-    private static final String KEYSTORE_TYPE = "PKCS12";
-    private static final String KEYSTORE_PRIVATE_KEY_ALIAS = "key";
-
     protected static class MemoryKeyStoreCertificateSource extends KeyStoreStreamCertificateSource {
 
         public final byte[] keystoreBytes;
@@ -110,8 +122,8 @@ public class AutoCertificateAndKeySource implements CertificateAndKeySource, jav
 
         public MemoryKeyStoreCertificateSource(String keyStoreType, byte[] keystoreBytes, String privateKeyAlias, String keyStorePassword) {
             super(keyStoreType, ByteSource.wrap(keystoreBytes), privateKeyAlias, keyStorePassword);
-            this.keystoreBytes = Objects.requireNonNull(keystoreBytes);
-            this.keystorePassword = Objects.requireNonNull(keyStorePassword);
+            this.keystoreBytes = requireNonNull(keystoreBytes);
+            this.keystorePassword = requireNonNull(keyStorePassword);
         }
 
     }
@@ -136,16 +148,18 @@ public class AutoCertificateAndKeySource implements CertificateAndKeySource, jav
         // no op; subclasses may override
     }
 
-    protected MemoryKeyStoreCertificateSource generate(String keystorePassword) throws IOException {
+    protected MemoryKeyStoreCertificateSource generate(String keystorePassword, String privateKeyAlias) throws IOException {
+        requireNonNull(privateKeyAlias, "privateKeyAlias");
+        requireNonNull(keystorePassword, "keystore password");
         File keystoreFile = File.createTempFile("dynamically-generated-certificate", ".keystore", scratchDir.toFile());
         try {
             // create a dynamic CA root certificate generator using default settings (2048-bit RSA keys)
             RootCertificateGenerator rootCertificateGenerator = RootCertificateGenerator.builder().build();
-            rootCertificateGenerator.saveRootCertificateAndKey(KEYSTORE_TYPE, keystoreFile, KEYSTORE_PRIVATE_KEY_ALIAS, keystorePassword);
+            rootCertificateGenerator.saveRootCertificateAndKey(KEYSTORE_TYPE, keystoreFile, privateKeyAlias, keystorePassword);
             log.debug("saved keystore to {} ({} bytes)%n", keystoreFile, keystoreFile.length());
             byte[] keystoreBytes = Files.toByteArray(keystoreFile);
             keystoreBytesGenerated(ByteSource.wrap(keystoreBytes));
-            return new MemoryKeyStoreCertificateSource(KEYSTORE_TYPE, keystoreBytes, KEYSTORE_PRIVATE_KEY_ALIAS, keystorePassword);
+            return new MemoryKeyStoreCertificateSource(KEYSTORE_TYPE, keystoreBytes, privateKeyAlias, keystorePassword);
         } finally {
             FileUtils.forceDelete(keystoreFile);
         }
@@ -163,6 +177,11 @@ public class AutoCertificateAndKeySource implements CertificateAndKeySource, jav
             public String getPassword() {
                 generateIfNecessary();
                 return onDemandSource.keystorePassword;
+            }
+
+            @Override
+            public String getPrivateKeyAlias() {
+                return privateKeyAlias;
             }
         };
     }

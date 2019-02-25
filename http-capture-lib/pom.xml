@@ -10,7 +10,8 @@
     <modelVersion>4.0.0</modelVersion>
 
     <artifactId>http-capture-lib</artifactId>
-
+    <profiles>
+    </profiles>
     <dependencies>
         <dependency>
             <groupId>org.brotli</groupId>
@@ -76,6 +77,16 @@
         <dependency>
             <groupId>com.helger</groupId>
             <artifactId>ph-css</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>org.slf4j</groupId>
+            <artifactId>slf4j-simple</artifactId>
+            <scope>test</scope>
+        </dependency>
+        <dependency>
+            <groupId>com.github.mike10004</groupId>
+            <artifactId>nanohttpd-server</artifactId>
+            <scope>test</scope>
         </dependency>
     </dependencies>
 </project>

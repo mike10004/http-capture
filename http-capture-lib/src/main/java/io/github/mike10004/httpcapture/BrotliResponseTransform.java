@@ -11,7 +11,9 @@ import net.lightbody.bmp.core.har.HarContent;
 import net.lightbody.bmp.core.har.HarEntry;
 import net.lightbody.bmp.core.har.HarNameValuePair;
 import net.lightbody.bmp.core.har.HarResponse;
+import org.apache.commons.lang3.StringUtils;
 import org.brotli.dec.BrotliInputStream;
+import org.slf4j.LoggerFactory;
 
 import javax.annotation.Nullable;
 import java.io.ByteArrayInputStream;
@@ -184,6 +186,7 @@ public class BrotliResponseTransform {
 //        jdk.nashorn.internal.parser.Parser parser = new jdk.nashorn.internal.parser.Parser(context.getEnv(), source, errors);
 //        parser.parse();
 //        return !errors.hasErrors();
-        throw new RuntimeException("not yet implemented");
+        LoggerFactory.getLogger(getClass()).debug("could not determine javascript validity: %s", StringUtils.abbreviateMiddle(sourceCode, " [...] ", 32));
+        return true;
     }
 }

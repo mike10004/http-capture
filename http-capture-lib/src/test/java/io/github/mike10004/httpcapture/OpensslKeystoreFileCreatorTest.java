@@ -24,8 +24,8 @@ public class OpensslKeystoreFileCreatorTest {
         random = new Random(getClass().getName().hashCode());
         String password = "shibboleth";
         try (AutoCertificateAndKeySource certificateAndKeySource = new AutoCertificateAndKeySource(temporaryFolder.getRoot().toPath())) {
-            AutoCertificateAndKeySource.MemoryKeyStoreCertificateSource m = certificateAndKeySource.generate(password);
-            keystoreInput = KeystoreInput.wrap(m.keystoreBytes, m.keystorePassword).copyFrozen();
+            AutoCertificateAndKeySource.MemoryKeyStoreCertificateSource m = certificateAndKeySource.generate(password, "mykey");
+            keystoreInput = KeystoreInput.wrap(m.keystoreBytes, m.keystorePassword, "mykey").copyFrozen();
         }
         keystoreFileCreator = new OpensslKeystoreFileCreator(UnitTests.makeKeytoolConfig(), UnitTests.makeOpensslConfig());
     }

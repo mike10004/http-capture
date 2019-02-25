@@ -2,7 +2,15 @@ package io.github.mike10004.httpcapture;
 
 import com.google.common.io.BaseEncoding;
 import com.google.common.io.Files;
+import com.google.common.net.HostAndPort;
 import io.github.mike10004.httpcapture.AutoCertificateAndKeySource.SerializableForm;
+import net.lightbody.bmp.core.har.Har;
+import net.lightbody.bmp.core.har.HarEntry;
+import net.lightbody.bmp.core.har.HarResponse;
+import org.apache.http.client.methods.CloseableHttpResponse;
+import org.apache.http.client.methods.HttpGet;
+import org.apache.http.impl.client.CloseableHttpClient;
+import org.apache.http.util.EntityUtils;
 import org.junit.Assert;
 import org.junit.Assume;
 import org.junit.Rule;
@@ -17,6 +25,7 @@ import java.util.Random;
 import java.util.concurrent.atomic.AtomicInteger;
 
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertNotNull;
 
 public class AutoCertificateAndKeySourceTest {
 
@@ -61,9 +70,9 @@ public class AutoCertificateAndKeySourceTest {
         }
 
         @Override
-        protected MemoryKeyStoreCertificateSource generate(String keystorePassword) throws IOException {
+        protected MemoryKeyStoreCertificateSource generate(String keystorePassword, String privateKeyAlias) throws IOException {
             generateInvocations.incrementAndGet();
-            return super.generate(keystorePassword);
+            return super.generate(keystorePassword, privateKeyAlias);
         }
     }
 
@@ -84,22 +93,26 @@ public class AutoCertificateAndKeySourceTest {
                 throw e;
             }
             Files.write(Base64.getDecoder().decode(serializableForm.keystoreBase64), keystoreFile);
-//            TrafficCollector collector = TrafficCollector.builder(new JBrowserDriverFactory(pemFile))
-//                    .collectHttps(certificateAndKeySource)
-//                    .build();
-//            String url = "https://example.com/";
-//            HarPlus<String> harPlusContent = collector.collect(driver -> {
-//                driver.get(url);
-//                return driver.getPageSource();
-//            });
-//            HarResponse response = harPlusContent.har.getLog().getEntries().stream()
-//                    .filter(entry -> url.equals(entry.getRequest().getUrl()))
-//                    .map(HarEntry::getResponse)
-//                    .findFirst()
-//                    .orElse(null);
-//            assertNotNull("response in har", response);
-//            assertEquals("response status", 200, response.getStatus());
-            Assert.fail("not yet implemented");
+            BasicCaptureServer server = BasicCaptureServer.builder()
+                    .collectHttps(certificateAndKeySource)
+                    .build();
+            String url = "https://example.com/";
+            HarCaptureMonitor monitor = new HarCaptureMonitor();
+            try (CaptureServerControl ctrl = server.start(monitor)) {
+                HostAndPort proxyAddress = HostAndPort.fromParts("127.0.0.1", ctrl.getPort());
+                try (CloseableHttpClient client = TestClients.buildTrustingHttpClient(proxyAddress, keystoreFile, keystoreInput.getPassword());
+                        CloseableHttpResponse response = client.execute(new HttpGet(url))) {
+                    EntityUtils.consume(response.getEntity());
+                }
+            }
+            Har har = monitor.getCapturedHar();
+            HarResponse response = har.getLog().getEntries().stream()
+                    .filter(entry -> url.equals(entry.getRequest().getUrl()))
+                    .map(HarEntry::getResponse)
+                    .findFirst()
+                    .orElse(null);
+            assertNotNull("response in har", response);
+            assertEquals("response status", 200, response.getStatus());
         }
     }
 

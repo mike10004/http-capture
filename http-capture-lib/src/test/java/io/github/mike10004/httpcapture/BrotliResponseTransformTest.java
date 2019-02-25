@@ -25,10 +25,10 @@ public class BrotliResponseTransformTest {
         Har har = new Har();
         HarLog log = new HarLog();
         har.setLog(log);
-        String plainJs = new String(loadResource("/harcleaner/response.js"), UTF_8);
-        String plainCss = new String(loadResource("/harcleaner/response.css"), UTF_8);
-        byte[] brotliJs = loadResource("/harcleaner/response.js.br");
-        byte[] brotliCss = loadResource("/harcleaner/response.css.br");
+        String plainJs = new String(loadResource("/brotli/response.js"), UTF_8);
+        String plainCss = new String(loadResource("/brotli/response.css"), UTF_8);
+        byte[] brotliJs = loadResource("/brotli/response.js.br");
+        byte[] brotliCss = loadResource("/brotli/response.css.br");
         HarResponse plainJsResponse = buildResponse("text/javascript", null, plainJs, null);
         HarResponse brotliJsResponse = buildResponse("text/javascript", HEADER_VALUE_BROTLI_ENCODED, brotliJs);
         HarResponse plainCssResponse = buildResponse("text/css", null, plainCss, null);
