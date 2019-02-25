@@ -86,12 +86,19 @@ public class BasicCaptureServer implements CaptureServer {
     }
 
     @Override
-    public CaptureServerControl start(@Nullable CaptureMonitor monitor) throws IOException {
+    public CaptureServerControl start(@Nullable CaptureMonitor monitor, @Nullable Integer port) throws IOException {
         BrowserMobProxy bmp = instantiateProxy();
         configureProxy(bmp, certificateAndKeySource, monitor);
         bmp.enableHarCaptureTypes(getCaptureTypes());
         bmp.newHar();
-        bmp.start();
+        if (port != null) {
+            throw new IllegalArgumentException("specifying port not currently supported");
+        }
+        if (port == null) {
+            bmp.start();
+        } else {
+            bmp.start(port);
+        }
         return new BasicControl(bmp.getPort()) {
             @Override
             public void close() {
