@@ -54,10 +54,10 @@ public class HttpCaptureProgramTest {
         program.latches.forEach(CountDownLatch::countDown);
         int exitCode = executeFuture.get(10, TimeUnit.SECONDS);
         assertEquals("exit code", 0, exitCode);
-        File outputFile = java.nio.file.Files.walk(program.config.parentDir)
+        File outputFile = java.nio.file.Files.walk(program.config.outputParent)
                 .map(Path::toFile)
                 .filter(File::isFile)
-                .findFirst().orElseThrow(() -> new AssertionError("no files in " + program.config.parentDir));
+                .findFirst().orElseThrow(() -> new AssertionError("no files in " + program.config.outputParent));
         String json = Files.asCharSource(outputFile, program.config.charset).read();
         assertTrue("json contains URL", json.contains("www.microsoft.com"));
     }
@@ -98,7 +98,7 @@ public class HttpCaptureProgramTest {
             HttpCaptureConfig config = new HttpCaptureConfig();
             config.stdout = stdout;
             config.stderr = stderr;
-            config.parentDir = java.nio.file.Files.createTempDirectory(FileUtils.getTempDirectory().toPath(), "unit-test-output");
+            config.outputParent = java.nio.file.Files.createTempDirectory(FileUtils.getTempDirectory().toPath(), "unit-test-output");
             return config;
         }
 

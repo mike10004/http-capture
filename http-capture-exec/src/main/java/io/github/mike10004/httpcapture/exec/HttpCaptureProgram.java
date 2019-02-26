@@ -42,14 +42,12 @@ class HttpCaptureProgram {
         HarCaptureMonitor monitor = new HarCaptureMonitor() {
             @Override
             public void responseReceived(ImmutableHttpRequest httpRequest, ImmutableHttpResponse httpResponse) {
-            if (!config.suppressInteractionEcho) {
-                config.stderr.format("%d %s %s%n", httpResponse.status, httpRequest.method, httpRequest.url);
-            }
+
             }
         };
         CaptureServerControl ctrl = server.start(monitor, config.port);
         serverStarted(ctrl);
-        OutputSink outputSink = OutputSink.toFileInParent(config.parentDir, config.charset);
+        OutputSink outputSink = OutputSink.toFileInParent(config.outputParent, config.charset);
         List<Runnable> postCompletionActions = new ArrayList<>();
         postCompletionActions.add(makeDeleteDirAction(tempdir));
         SigtermHook hook = new SigtermHook(ctrl, monitor, outputSink, postCompletionActions);
@@ -59,13 +57,26 @@ class HttpCaptureProgram {
         return 0;
     }
 
+    private class CustomCaptureMonitor extends HarCaptureMonitor {
+        @Override
+        public void responseReceived(ImmutableHttpRequest httpRequest, ImmutableHttpResponse httpResponse) {
+            if (config.interceptMode.isReport()) {
+                config.stderr.format("%d %s %s%n", httpResponse.status, httpRequest.method, httpRequest.url);
+            }
+        }
+    }
+
+    protected HarCaptureMonitor createMonitor() {
+        return new CustomCaptureMonitor();
+    }
+
     @VisibleForTesting
     protected void serverStarted(CaptureServerControl ctrl) {
 
     }
 
     protected void waitForSignal() throws InterruptedException {
-        makeLatch().await();
+        new CountDownLatch(1).await();
     }
 
     private static Runnable makeDeleteDirAction(Path directory) {
@@ -80,29 +91,50 @@ class HttpCaptureProgram {
         };
     }
 
-    protected CountDownLatch makeLatch() {
-        return new CountDownLatch(1);
-    }
-
+    /**
+     * Thin representation of a runtime.
+     */
     interface RuntimeFacade {
+
+        /**
+         * Adds a shutdown hook. In a facade of the actual runtime, this invokes
+         * {@link Runtime#addShutdownHook(Thread)}.
+         * @param thread the hook thread
+         */
         void addShutdownHook(Thread thread);
+
+        /**
+         * Returns a wrapper around the actual runtime.
+         * @return a runtime wrapper
+         * @see Runtime#getRuntime()
+         */
+        static RuntimeFacade actual() {
+            Runtime rt = Runtime.getRuntime();
+            return new RuntimeFacade() {
+                @Override
+                public void addShutdownHook(Thread thread) {
+                    rt.addShutdownHook(thread);
+                }
+            };
+        }
     }
 
     protected RuntimeFacade getRuntime() {
-        Runtime rt = Runtime.getRuntime();
-        return new RuntimeFacade() {
-            @Override
-            public void addShutdownHook(Thread thread) {
-                rt.addShutdownHook(thread);
-            }
-        };
+        return RuntimeFacade.actual();
     }
 
+    /**
+     * Class that represents the completion action performed when the user sends the
+     * termination signal to the process. In the most common use case
+     */
     class SigtermHook {
 
         private CaptureServerControl serverControl;
+
         private HarCaptureMonitor monitor;
+
         private OutputSink outputSink;
+
         private final List<Runnable> postCompletionActions;
 
         public SigtermHook(CaptureServerControl serverControl, HarCaptureMonitor monitor, OutputSink outputSink, Collection<Runnable> postCompletionActions) {
@@ -120,12 +152,14 @@ class HttpCaptureProgram {
             try {
                 if (serverControl.isStarted()) {
                     serverControl.close();
-                    Har har = monitor.getCapturedHar();
-                    config.stderr.format("http-capture: writing %d HTTP interactions to %s%n", har.getLog().getEntries().size(), outputSink.describe());
-                    try (Writer out = outputSink.openStream(har)) {
-                        har.writeTo(out);
+                    if (config.captureMode.isWriteHar()) {
+                        Har har = monitor.getCapturedHar();
+                        config.stderr.format("http-capture: writing %d HTTP interactions to %s%n", har.getLog().getEntries().size(), outputSink.describe());
+                        try (Writer out = outputSink.openStream(har)) {
+                            har.writeTo(out);
+                        }
+                        config.stderr.format("http-capture: wrote %s%n", outputSink.describe());
                     }
-                    config.stderr.format("http-capture: wrote %s%n", outputSink.describe());
                 } else {
                     config.stderr.println("http-capture: server never started; not writing output file");
                 }
