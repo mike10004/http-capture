@@ -1,11 +1,11 @@
 package io.github.mike10004.httpcapture;
 
 import com.google.common.net.HostAndPort;
+import io.github.mike10004.httpcapture.testing.TestClients;
 import net.lightbody.bmp.core.har.Har;
 import net.lightbody.bmp.core.har.HarEntry;
 import net.lightbody.bmp.core.har.HarResponse;
 import org.apache.http.client.methods.HttpGet;
-import org.junit.Assert;
 import org.junit.Test;
 
 import static org.junit.Assert.assertEquals;

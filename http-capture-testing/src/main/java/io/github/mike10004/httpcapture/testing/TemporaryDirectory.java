@@ -1,4 +1,4 @@
-package io.github.mike10004.httpcapture;
+package io.github.mike10004.httpcapture.testing;
 
 import org.apache.commons.io.FileUtils;
 

@@ -4,6 +4,7 @@ import com.google.common.io.Resources;
 import com.google.common.net.HostAndPort;
 import com.google.common.net.HttpHeaders;
 import com.google.common.net.MediaType;
+import io.github.mike10004.httpcapture.testing.TestClients;
 import io.github.mike10004.nanochamp.repackaged.fi.iki.elonen.NanoHTTPD;
 import io.github.mike10004.nanochamp.server.NanoControl;
 import io.github.mike10004.nanochamp.server.NanoResponse;

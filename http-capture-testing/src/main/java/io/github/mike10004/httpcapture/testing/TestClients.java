@@ -1,4 +1,4 @@
-package io.github.mike10004.httpcapture;
+package io.github.mike10004.httpcapture.testing;
 
 import com.google.common.net.HostAndPort;
 import org.apache.http.HttpHost;
@@ -23,7 +23,7 @@ import java.io.File;
 import java.io.IOException;
 import java.security.GeneralSecurityException;
 
-class TestClients {
+public class TestClients {
 
     private TestClients() {}
 

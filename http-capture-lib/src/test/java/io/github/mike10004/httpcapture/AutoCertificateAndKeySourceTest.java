@@ -4,6 +4,7 @@ import com.google.common.io.BaseEncoding;
 import com.google.common.io.Files;
 import com.google.common.net.HostAndPort;
 import io.github.mike10004.httpcapture.AutoCertificateAndKeySource.SerializableForm;
+import io.github.mike10004.httpcapture.testing.TestClients;
 import net.lightbody.bmp.core.har.Har;
 import net.lightbody.bmp.core.har.HarEntry;
 import net.lightbody.bmp.core.har.HarResponse;
@@ -11,7 +12,6 @@ import org.apache.http.client.methods.CloseableHttpResponse;
 import org.apache.http.client.methods.HttpGet;
 import org.apache.http.impl.client.CloseableHttpClient;
 import org.apache.http.util.EntityUtils;
-import org.junit.Assert;
 import org.junit.Assume;
 import org.junit.Rule;
 import org.junit.Test;
@@ -101,7 +101,7 @@ public class AutoCertificateAndKeySourceTest {
             try (CaptureServerControl ctrl = server.start(monitor)) {
                 HostAndPort proxyAddress = HostAndPort.fromParts("127.0.0.1", ctrl.getPort());
                 try (CloseableHttpClient client = TestClients.buildTrustingHttpClient(proxyAddress, keystoreFile, keystoreInput.getPassword());
-                        CloseableHttpResponse response = client.execute(new HttpGet(url))) {
+                     CloseableHttpResponse response = client.execute(new HttpGet(url))) {
                     EntityUtils.consume(response.getEntity());
                 }
             }

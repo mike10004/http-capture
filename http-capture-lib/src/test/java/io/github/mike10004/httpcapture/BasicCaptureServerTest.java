@@ -3,6 +3,8 @@ package io.github.mike10004.httpcapture;
 import com.google.common.base.Strings;
 import com.google.common.io.Files;
 import com.google.common.net.HostAndPort;
+import io.github.mike10004.httpcapture.testing.TemporaryDirectory;
+import io.github.mike10004.httpcapture.testing.TestClients;
 import net.lightbody.bmp.core.har.Har;
 import org.apache.http.client.methods.CloseableHttpResponse;
 import org.apache.http.client.methods.HttpGet;
@@ -10,7 +12,6 @@ import org.apache.http.impl.client.CloseableHttpClient;
 import org.apache.http.util.EntityUtils;
 import org.junit.Test;
 
-import javax.net.ssl.SSLContext;
 import java.io.File;
 import java.net.URL;
 import java.util.List;

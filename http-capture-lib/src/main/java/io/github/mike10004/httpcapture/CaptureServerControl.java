@@ -4,4 +4,6 @@ public interface CaptureServerControl extends java.io.Closeable {
 
     int getPort();
 
+    boolean isStarted();
+
 }

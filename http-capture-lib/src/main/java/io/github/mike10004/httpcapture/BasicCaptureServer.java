@@ -72,15 +72,20 @@ public class BasicCaptureServer implements CaptureServer {
 
     private abstract class BasicControl implements CaptureServerControl {
 
-        private final int port;
+        private final BrowserMobProxy proxyServer;
 
-        public BasicControl(int port) {
-            this.port = port;
+        public BasicControl(BrowserMobProxy proxyServer) {
+            this.proxyServer = proxyServer;
         }
 
         @Override
         public int getPort() {
-            return port;
+            return proxyServer.getPort();
+        }
+
+        @Override
+        public boolean isStarted() {
+            return proxyServer.isStarted();
         }
 
     }
@@ -96,7 +101,7 @@ public class BasicCaptureServer implements CaptureServer {
         } else {
             bmp.start(port);
         }
-        return new BasicControl(bmp.getPort()) {
+        return new BasicControl(bmp) {
             @Override
             public void close() {
                 bmp.stop();
