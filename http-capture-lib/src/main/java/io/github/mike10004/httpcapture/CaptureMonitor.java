@@ -12,11 +12,11 @@ public interface CaptureMonitor {
 
     /**
      * Callback invoked when a response from the remote server is received by the capturing proxy.
-     * This method is invoked from {@link TrafficMonitorFilter#serverToProxyResponse(HttpObject)}
+     * This method is invoked from {@link CaptureMonitorFilter#serverToProxyResponse(HttpObject)}
      * or one of that class's error methods.
      * @param httpResponse the HTTP response
      * @param httpRequest the HTTP request
-     * @see TrafficMonitorFilter
+     * @see CaptureMonitorFilter
      */
     default void responseReceived(ImmutableHttpRequest httpRequest, ImmutableHttpResponse httpResponse) {
 

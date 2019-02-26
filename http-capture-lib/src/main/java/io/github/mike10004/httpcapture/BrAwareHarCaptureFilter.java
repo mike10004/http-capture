@@ -50,8 +50,13 @@ import java.util.Set;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
 
+/**
+ * Filters implementation that stores interactions in a Har object.
+ * <p>Most of this code is adapted from {@link net.lightbody.bmp.filters.HarCaptureFilter}.
+ */
 public class BrAwareHarCaptureFilter extends HttpsAwareFiltersAdapter {
-    private static final Logger log = LoggerFactory.getLogger(net.lightbody.bmp.filters.HarCaptureFilter.class);
+
+    private static final Logger log = LoggerFactory.getLogger(BrAwareHarCaptureFilter.class);
 
     /**
      * The currently active HAR at the time the current request is received.

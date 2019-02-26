@@ -34,12 +34,7 @@ public class BrAwareBrowserMobProxyServer extends BrowserMobProxyServer  {
             addHttpFilterFactory(new HttpFiltersSourceAdapter() {
                 @Override
                 public HttpFilters filterRequest(HttpRequest originalRequest, ChannelHandlerContext ctx) {
-                    Har har = getHar();
-                    if (har != null && !ProxyUtils.isCONNECT(originalRequest)) {
-                        return new BrAwareHarCaptureFilter(originalRequest, ctx, har, getCurrentHarPage() == null ? null : getCurrentHarPage().getId(), getHarCaptureTypes());
-                    } else {
-                        return null;
-                    }
+                    return createHarCaptureFilter(originalRequest, ctx);
                 }
             });
 
@@ -55,6 +50,16 @@ public class BrAwareBrowserMobProxyServer extends BrowserMobProxyServer  {
                     }
                 }
             });
+        }
+    }
+
+    protected HttpFilters createHarCaptureFilter(HttpRequest originalRequest, ChannelHandlerContext ctx) {
+        Har har = getHar();
+        if (har != null && !ProxyUtils.isCONNECT(originalRequest)) {
+            String harPageId = getCurrentHarPage() == null ? null : getCurrentHarPage().getId();
+            return new BrAwareHarCaptureFilter(originalRequest, ctx, har, harPageId, getHarCaptureTypes());
+        } else {
+            return null;
         }
     }
 }

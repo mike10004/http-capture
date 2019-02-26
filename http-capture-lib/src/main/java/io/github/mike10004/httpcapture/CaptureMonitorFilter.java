@@ -74,9 +74,9 @@ import static com.google.common.base.Preconditions.checkNotNull;
  *     </li>
  * </ul>
  */
-public class TrafficMonitorFilter extends HttpsAwareFiltersAdapter {
+public class CaptureMonitorFilter extends HttpsAwareFiltersAdapter {
 
-    private static final Logger log = LoggerFactory.getLogger(TrafficMonitorFilter.class);
+    private static final Logger log = LoggerFactory.getLogger(CaptureMonitorFilter.class);
 
     private final CaptureMonitor trafficMonitor;
     private transient final Object notificationLock = new Object();
@@ -126,7 +126,7 @@ public class TrafficMonitorFilter extends HttpsAwareFiltersAdapter {
      * @param trafficMonitor traffic monitor (subscriber to notifications from this filter)
      * @throws IllegalArgumentException if request method is {@code CONNECT}
      */
-    public TrafficMonitorFilter(HttpRequest originalRequest, ChannelHandlerContext ctx, CaptureMonitor trafficMonitor) {
+    public CaptureMonitorFilter(HttpRequest originalRequest, ChannelHandlerContext ctx, CaptureMonitor trafficMonitor) {
         super(originalRequest, ctx);
         if (ProxyUtils.isCONNECT(originalRequest)) {
             throw new IllegalArgumentException("Attempted traffic listener capture for HTTP CONNECT request");

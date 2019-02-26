@@ -90,8 +90,10 @@ public class BasicCaptureServer implements CaptureServer {
 
     }
 
+    @SuppressWarnings("RedundantThrows")
     @Override
-    public CaptureServerControl start(@Nullable CaptureMonitor monitor, @Nullable Integer port) throws IOException {
+    public CaptureServerControl start(CaptureMonitor monitor, @Nullable Integer port) throws IOException {
+        requireNonNull(monitor, "monitor must be non-null, otherwise what's the point");
         BrowserMobProxy bmp = instantiateProxy();
         configureProxy(bmp, certificateAndKeySource, monitor);
         bmp.enableHarCaptureTypes(getCaptureTypes());
@@ -105,13 +107,11 @@ public class BasicCaptureServer implements CaptureServer {
             @Override
             public void close() {
                 bmp.stop();
-                if (monitor != null) {
-                    Har har = bmp.getHar();
-                    for (HarPostProcessor harPostProcessor : harPostProcessors) {
-                        harPostProcessor.process(har);
-                    }
-                    monitor.harCaptured(har);
+                Har har = bmp.getHar();
+                for (HarPostProcessor harPostProcessor : harPostProcessors) {
+                    harPostProcessor.process(har);
                 }
+                monitor.harCaptured(har);
             }
         };
     }
@@ -136,7 +136,7 @@ public class BasicCaptureServer implements CaptureServer {
 
         private HttpFilters doFilterRequest(HttpRequest originalRequest, @Nullable ChannelHandlerContext ctx) {
             if (!ProxyUtils.isCONNECT(originalRequest)) {
-                return new TrafficMonitorFilter(originalRequest, ctx, monitor);
+                return new CaptureMonitorFilter(originalRequest, ctx, monitor);
             } else {
                 return null;
             }
