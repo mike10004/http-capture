@@ -53,10 +53,12 @@ import java.util.concurrent.atomic.AtomicInteger;
 /**
  * Filters implementation that stores interactions in a Har object.
  * <p>Most of this code is adapted from {@link net.lightbody.bmp.filters.HarCaptureFilter}.
+ * The enhancement is brotli-awareness.
  */
-public class BrAwareHarCaptureFilter extends HttpsAwareFiltersAdapter {
+@SuppressWarnings("Duplicates")
+public class EnhancedHarCaptureFilter extends HttpsAwareFiltersAdapter {
 
-    private static final Logger log = LoggerFactory.getLogger(BrAwareHarCaptureFilter.class);
+    private static final Logger log = LoggerFactory.getLogger(EnhancedHarCaptureFilter.class);
 
     /**
      * The currently active HAR at the time the current request is received.
@@ -80,7 +82,7 @@ public class BrAwareHarCaptureFilter extends HttpsAwareFiltersAdapter {
      * Like requestCaptureFilter above, HarCaptureFilter delegates to responseCaptureFilter to capture response contents. If content capture
      * is not required for this request, the filter will not be instantiated or invoked.
      */
-    private final BrAwareServerResponseCaptureFilter responseCaptureFilter;
+    private final EnhancedServerResponseCaptureFilter responseCaptureFilter;
 
     /**
      * The CaptureType data types to capture in this request.
@@ -145,7 +147,7 @@ public class BrAwareHarCaptureFilter extends HttpsAwareFiltersAdapter {
      * @param dataToCapture the data types to capture for this request. null or empty set indicates only basic information will be
      *                      captured (see {@link net.lightbody.bmp.proxy.CaptureType} for information on data collected for each CaptureType)
      */
-    public BrAwareHarCaptureFilter(HttpRequest originalRequest, ChannelHandlerContext ctx, Har har, String currentPageRef, Set<CaptureType> dataToCapture) {
+    public EnhancedHarCaptureFilter(HttpRequest originalRequest, ChannelHandlerContext ctx, Har har, String currentPageRef, Set<CaptureType> dataToCapture) {
         super(originalRequest, ctx);
 
         if (har == null) {
@@ -174,7 +176,7 @@ public class BrAwareHarCaptureFilter extends HttpsAwareFiltersAdapter {
         }
 
         if (this.dataToCapture.contains(CaptureType.RESPONSE_CONTENT) || this.dataToCapture.contains(CaptureType.RESPONSE_BINARY_CONTENT)) {
-            responseCaptureFilter = new BrAwareServerResponseCaptureFilter(originalRequest, true);
+            responseCaptureFilter = new EnhancedServerResponseCaptureFilter(originalRequest, true);
         } else {
             responseCaptureFilter = null;
         }

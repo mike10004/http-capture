@@ -16,6 +16,9 @@ import java.util.Set;
 
 import static com.google.common.base.Preconditions.checkNotNull;
 
+/**
+ * Filters implementation that modifies headers in an outgoing request.
+ */
 public class HeaderModifyingRequestFilters extends HttpFiltersAdapter {
 
     private final ImmutableSet<String> headersToRemove;

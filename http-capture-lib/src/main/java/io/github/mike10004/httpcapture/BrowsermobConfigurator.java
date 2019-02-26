@@ -13,7 +13,7 @@ import static java.util.Objects.requireNonNull;
 /**
  * Interface of a service class that performs configuration operations relating to proxy instances.
  */
-public interface BmpConfigurator {
+public interface BrowsermobConfigurator {
 
     /**
      * Configures the chained proxy manager of a proxy instance.
@@ -25,8 +25,8 @@ public interface BmpConfigurator {
      * Returns a configurator that configures a direct connection upstream, meaning no proxy is to be used.
      * @return a configurator
      */
-    static BmpConfigurator noProxy() {
-        return new BmpConfigurator() {
+    static BrowsermobConfigurator noProxy() {
+        return new BrowsermobConfigurator() {
             @Override
             public void configureUpstream(BrowserMobProxy bmp) {
                 bmp.setChainedProxy(null);
@@ -46,8 +46,8 @@ public interface BmpConfigurator {
      * Returns a configurator that does not act upon a proxy instance.
      * @return a configurator instance
      */
-    static BmpConfigurator inoperative() {
-        return new BmpConfigurator() {
+    static BrowsermobConfigurator inoperative() {
+        return new BrowsermobConfigurator() {
             @Override
             public void configureUpstream(BrowserMobProxy proxy) {
             }
@@ -64,9 +64,9 @@ public interface BmpConfigurator {
      * @param proxySpecUriProvider the supplier of the URI
      * @return a configurator instance
      */
-    static BmpConfigurator upstream(Supplier<URI> proxySpecUriProvider) {
+    static BrowsermobConfigurator upstream(Supplier<URI> proxySpecUriProvider) {
         requireNonNull(proxySpecUriProvider);
-        return new BmpConfigurator() {
+        return new BrowsermobConfigurator() {
             @Override
             public void configureUpstream(BrowserMobProxy bmp) {
                 @Nullable URI proxySpecUri = proxySpecUriProvider.get();

@@ -38,7 +38,7 @@ public class BasicCaptureServer implements CaptureServer {
     @Nullable
     private final CertificateAndKeySource certificateAndKeySource;
     private final ImmutableList<HttpFiltersSource> httpFiltersSources;
-    private final BmpConfigurator upstreamConfigurator;
+    private final BrowsermobConfigurator upstreamConfigurator;
     private final Supplier<? extends BrowserMobProxy> interceptingProxyInstantiator;
     private final ImmutableList<HarPostProcessor> harPostProcessors;
 
@@ -55,7 +55,7 @@ public class BasicCaptureServer implements CaptureServer {
      * @param exceptionReactor exception reactor
      */
     protected BasicCaptureServer(@Nullable CertificateAndKeySource certificateAndKeySource,
-                                 BmpConfigurator upstreamConfigurator,
+                                 BrowsermobConfigurator upstreamConfigurator,
                                  Iterable<? extends HttpFiltersSource> httpFiltersSources,
                                  Supplier<? extends BrowserMobProxy> interceptingProxyInstantiator,
                                  Iterable<? extends HarPostProcessor> harPostProcessors) {
@@ -198,8 +198,8 @@ public class BasicCaptureServer implements CaptureServer {
 
         private CertificateAndKeySource certificateAndKeySource = null;
         private final List<HttpFiltersSource> httpFiltersSources = new ArrayList<>();
-        private BmpConfigurator upstreamConfigurator = BmpConfigurator.inoperative();
-        private Supplier<? extends BrowserMobProxy> interceptingProxyInstantiator = BrAwareBrowserMobProxyServer::new;
+        private BrowsermobConfigurator upstreamConfigurator = BrowsermobConfigurator.inoperative();
+        private Supplier<? extends BrowserMobProxy> interceptingProxyInstantiator = CapturableProxyServer::new;
         private final List<HarPostProcessor> harPostProcessors = new ArrayList<>();
 
         Builder() {
@@ -214,7 +214,7 @@ public class BasicCaptureServer implements CaptureServer {
         /**
          * Sets the supplier of the proxy server instance that is used to intercept and collect traffic.
          * By default, we supply a custom implementation that supports brotli decoding,
-         * {@link BrAwareBrowserMobProxyServer}. To revert this behavior to a more hands-off implementation,
+         * {@link CapturableProxyServer}. To revert this behavior to a more hands-off implementation,
          * set this to a supplier of a {@link net.lightbody.bmp.BrowserMobProxyServer} instance.
          * @param interceptingProxyInstantiator the instantiator
          * @return this builder instance
@@ -245,10 +245,10 @@ public class BasicCaptureServer implements CaptureServer {
         }
 
         public Builder noUpstreamProxy() {
-            return upstreamProxy(BmpConfigurator.noProxy());
+            return upstreamProxy(BrowsermobConfigurator.noProxy());
         }
 
-        private Builder upstreamProxy(BmpConfigurator configurator) {
+        private Builder upstreamProxy(BrowsermobConfigurator configurator) {
             this.upstreamConfigurator = requireNonNull(configurator);
             return this;
         }
@@ -287,7 +287,7 @@ public class BasicCaptureServer implements CaptureServer {
          * @return this builder instance
          */
         public Builder upstreamProxy(Supplier<URI> proxySpecificationSupplier) {
-            this.upstreamConfigurator = BmpConfigurator.upstream(proxySpecificationSupplier);
+            this.upstreamConfigurator = BrowsermobConfigurator.upstream(proxySpecificationSupplier);
             return this;
         }
 

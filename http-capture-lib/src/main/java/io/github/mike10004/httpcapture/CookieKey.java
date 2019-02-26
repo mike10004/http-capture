@@ -8,9 +8,25 @@ import java.util.Objects;
 
 import static java.util.Objects.requireNonNull;
 
+/**
+ * Value class that represents the triplet of properties that for a unique key
+ * for the cookie in a user agent's cookie storage layer.
+ */
 public class CookieKey {
+
+    /**
+     * Cookie domain.
+     */
     public final String domain;
+
+    /**
+     * Cookie name.
+     */
     public final String name;
+
+    /**
+     * Cookie path.
+     */
     public final String path;
 
     private CookieKey(String domain, String name, String path) {
@@ -19,8 +35,14 @@ public class CookieKey {
         this.path = requireNonNull(path);
     }
 
+    /**
+     * Creates a cookie key from possibly-malformed inputs.
+     * @param domain the domain
+     * @param name the name
+     * @param path the path
+     * @return the cookie key
+     */
     public static CookieKey from(@Nullable String domain, @Nullable String name, @Nullable String path) {
-        //noinspection ConstantConditions
         return new CookieKey(Strings.nullToEmpty(domain), Strings.nullToEmpty(name), MoreObjects.firstNonNull(path, "/"));
     }
 

@@ -9,7 +9,7 @@ import com.google.common.io.ByteSource;
 import javax.annotation.Nullable;
 import java.nio.charset.Charset;
 
-public class Subprocesses {
+class Subprocesses {
 
     public static ProcessResult<String, String> executeAndWait(Subprocess subprocess, Charset charset, @Nullable ByteSource stdin) throws InterruptedException, ProcessException {
         ProcessResult<String, String> result;

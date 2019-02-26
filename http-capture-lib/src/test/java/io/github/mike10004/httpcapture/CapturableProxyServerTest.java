@@ -11,7 +11,7 @@ import org.junit.Test;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
 
-public class BrAwareBrowserMobProxyServerTest {
+public class CapturableProxyServerTest {
 
     @Test
     public void decodeDuringHarCapture() throws Exception {

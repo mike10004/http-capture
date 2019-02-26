@@ -33,7 +33,7 @@ import static org.junit.Assert.assertNotNull;
 /**
  * Test for the brotli-aware filter.
  */
-public class BrAwareServerResponseCaptureFilterTest {
+public class EnhancedServerResponseCaptureFilterTest {
 
     private static class RecordingMonitor extends HarCaptureMonitor {
         public final List<HttpInteraction> interactions;
@@ -95,7 +95,7 @@ public class BrAwareServerResponseCaptureFilterTest {
         @Test
         public void decompressBrotliContents() throws Exception {
             HttpRequest request = new DefaultFullHttpRequest(HttpVersion.HTTP_1_1, HttpMethod.GET, String.format("http://localhost:%d/blah", 12345));
-            BrAwareServerResponseCaptureFilter filter = new BrAwareServerResponseCaptureFilter(request, true);
+            EnhancedServerResponseCaptureFilter filter = new EnhancedServerResponseCaptureFilter(request, true);
             byte[] brotliBytes = loadBrotliCompressedSample();
             byte[] decompressedBytes = filter.decompressContents(brotliBytes, BrotliInputStream::new);
             byte[] expected = loadUncompressedSample();
@@ -105,10 +105,10 @@ public class BrAwareServerResponseCaptureFilterTest {
 
 
     private static byte[] loadUncompressedSample() throws IOException {
-        return Resources.toByteArray(BrAwareServerResponseCaptureFilterTest.class.getResource("/brotli/a100.txt"));
+        return Resources.toByteArray(EnhancedServerResponseCaptureFilterTest.class.getResource("/brotli/a100.txt"));
     }
 
     private static byte[] loadBrotliCompressedSample() throws IOException {
-        return Resources.toByteArray(BrAwareServerResponseCaptureFilterTest.class.getResource("/brotli/a100.txt.br"));
+        return Resources.toByteArray(EnhancedServerResponseCaptureFilterTest.class.getResource("/brotli/a100.txt.br"));
     }
 }

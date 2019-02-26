@@ -11,14 +11,14 @@ import org.littleshoot.proxy.impl.ProxyUtils;
 
 import java.util.concurrent.atomic.AtomicBoolean;
 
-public class BrAwareBrowserMobProxyServer extends BrowserMobProxyServer  {
+public class CapturableProxyServer extends BrowserMobProxyServer  {
 
     /**
      * Set to true once the HAR capture filter has been added to the filter chain.
      */
     private final AtomicBoolean harCaptureFilterEnabled = new AtomicBoolean(false);
 
-    public BrAwareBrowserMobProxyServer() {
+    public CapturableProxyServer() {
     }
 
     /**
@@ -57,7 +57,7 @@ public class BrAwareBrowserMobProxyServer extends BrowserMobProxyServer  {
         Har har = getHar();
         if (har != null && !ProxyUtils.isCONNECT(originalRequest)) {
             String harPageId = getCurrentHarPage() == null ? null : getCurrentHarPage().getId();
-            return new BrAwareHarCaptureFilter(originalRequest, ctx, har, harPageId, getHarCaptureTypes());
+            return new EnhancedHarCaptureFilter(originalRequest, ctx, har, harPageId, getHarCaptureTypes());
         } else {
             return null;
         }

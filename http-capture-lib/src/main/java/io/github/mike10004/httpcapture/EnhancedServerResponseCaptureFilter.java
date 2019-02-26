@@ -28,17 +28,19 @@ import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 /**
- * Brotli-aware server response capture filter. Copied from {@link net.lightbody.bmp.filters.ServerResponseCaptureFilter}
- * but adds support for {@code br} encoding to the existing {@code gz} support.
+ * Server response capture filter slightly improved from superclass implementation.
+ * Code is adapted from {@link net.lightbody.bmp.filters.ServerResponseCaptureFilter}
+ * but support is added for {@code br} encoding (where as only {@code gz} was supported
+ * before).
  */
 @SuppressWarnings({"unused", "StatementWithEmptyBody", "BooleanParameter", "SimplifiableIfStatement"})
-public class BrAwareServerResponseCaptureFilter  extends ServerResponseCaptureFilter {
+public class EnhancedServerResponseCaptureFilter extends ServerResponseCaptureFilter {
 
     private static final String SYSPROP_PRINT_DECODER_ERROR_STACKTRACE = "selenium-help.responseCapture.decoding.errors.printStackTraces";
 
     public static final String HEADER_VALUE_BROTLI_ENCODING = "br";
 
-    private static final Logger log = LoggerFactory.getLogger(BrAwareServerResponseCaptureFilter.class);
+    private static final Logger log = LoggerFactory.getLogger(EnhancedServerResponseCaptureFilter.class);
 
     /**
      * Populated by serverToProxyResponse() when processing the HttpResponse object
@@ -82,12 +84,12 @@ public class BrAwareServerResponseCaptureFilter  extends ServerResponseCaptureFi
      */
     private final boolean decompressEncodedContent;
 
-    public BrAwareServerResponseCaptureFilter(HttpRequest originalRequest, boolean decompressEncodedContent) {
+    public EnhancedServerResponseCaptureFilter(HttpRequest originalRequest, boolean decompressEncodedContent) {
         super(originalRequest, decompressEncodedContent);
         this.decompressEncodedContent = decompressEncodedContent;
     }
 
-    public BrAwareServerResponseCaptureFilter(HttpRequest originalRequest, ChannelHandlerContext ctx, boolean decompressEncodedContent) {
+    public EnhancedServerResponseCaptureFilter(HttpRequest originalRequest, ChannelHandlerContext ctx, boolean decompressEncodedContent) {
         super(originalRequest, ctx, decompressEncodedContent);
         this.decompressEncodedContent = decompressEncodedContent;
     }

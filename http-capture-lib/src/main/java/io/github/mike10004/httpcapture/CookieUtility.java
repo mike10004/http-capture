@@ -43,6 +43,10 @@ public class CookieUtility {
         return instance;
     }
 
+    /**
+     * @deprecated use {@link CookieKey} instead
+     */
+    @Deprecated
     public static class CookieHash extends Triple<String, String, String> {
 
         private final ImmutableTriple<String, String, String> inner;
@@ -96,48 +100,6 @@ public class CookieUtility {
                 checkNotNull(apacheCookie.getName(), "name"),
                 MoreObjects.firstNonNull(apacheCookie.getPath(), "/"));
     }
-
-//    public Set<Cookie> filterApacheCookiesBySeleniumMatches(List<Cookie> apacheCookies, Iterable<org.openqa.selenium.Cookie> seleniumCookies) {
-//        List<Cookie> matchingCookieList = new ArrayList<>();
-//        for (org.openqa.selenium.Cookie seleniumCookie : seleniumCookies) {
-//            Iterator<Cookie> matches = apacheCookies.stream().filter(apacheMatcher(seleniumCookie)).iterator();
-//            if (matches.hasNext()) {
-//                Cookie m = matches.next();
-//                if (matches.hasNext()) {
-//                    throw new IllegalArgumentException("more than one apache cookie matches " + seleniumCookie + "; all matching: " + matches);
-//                }
-//                matchingCookieList.add(m);
-//            }
-//        }
-//        Map<CookieHash, Cookie> mapWithLatest = new HashMap<>(matchingCookieList.size());
-//        for (Cookie cookie : matchingCookieList) {
-//            mapWithLatest.put(getIdentifier(cookie), cookie);
-//        }
-//        Set<Cookie> cookieSet = ImmutableSet.copyOf(mapWithLatest.values());
-//        return cookieSet;
-//    }
-
-//    public static Predicate<Cookie> apacheMatcher(final org.openqa.selenium.Cookie requiredParameters) {
-//        return apacheMatcher(requiredParameters.getName(), requiredParameters.getValue(), requiredParameters.getDomain(), requiredParameters.getPath());
-//    }
-
-//    private static boolean isSameDomain(String domain, String apacheCookieDomainValue) {
-//        return Objects.equals(domain, apacheCookieDomainValue)
-//                || (!domain.isEmpty() && domain.charAt(0) == '.'
-//                && domain.regionMatches(true, 1, apacheCookieDomainValue, 0, apacheCookieDomainValue.length()));
-//    }
-
-//    public static Predicate<Coo>
-//
-//    public static Predicate<Cookie> apacheMatcher(final String name, final String value, final String domain, final @Nullable String path) {
-//        checkNotNull(name);
-//        checkNotNull(value);
-//        checkNotNull(domain);
-//        return c -> c != null && name.equalsIgnoreCase(c.getName())
-//                && value.equals(c.getValue())
-//                && isSameDomain(domain, c.getDomain())
-//                && Objects.equals(path, c.getPath());
-//    }
 
     public static Function<String, Stream<Cookie>> headerToCookiesFunction(final CookieOrigin cookieOrigin, final CookieSpec cookieSpec) {
         return input -> {
