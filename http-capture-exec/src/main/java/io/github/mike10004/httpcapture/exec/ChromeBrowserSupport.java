@@ -48,7 +48,7 @@ public class ChromeBrowserSupport implements BrowserSupport {
 
     static final List<String> DEFAULT_CHROME_ARGS = Collections.unmodifiableList(Arrays.asList(
             "--no-first-run",
-            "--ignore-certificate-errors"
+            "--ignore-certificate-errors" // Chrome says this is not supported, but it works
     ));
 
     private class LaunchableChromish implements LaunchableBrowser {
