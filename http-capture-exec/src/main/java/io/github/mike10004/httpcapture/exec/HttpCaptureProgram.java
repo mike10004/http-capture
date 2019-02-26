@@ -1,6 +1,12 @@
 package io.github.mike10004.httpcapture.exec;
 
+import com.github.mike10004.nativehelper.subprocess.ProcessMonitor;
+import com.github.mike10004.nativehelper.subprocess.ScopedProcessTracker;
 import com.google.common.annotations.VisibleForTesting;
+import com.google.common.collect.ImmutableList;
+import com.google.common.io.CharSource;
+import com.google.common.net.HostAndPort;
+import com.opencsv.CSVReader;
 import io.github.mike10004.httpcapture.AutoCertificateAndKeySource;
 import io.github.mike10004.httpcapture.BasicCaptureServer;
 import io.github.mike10004.httpcapture.CaptureServer;
@@ -8,16 +14,20 @@ import io.github.mike10004.httpcapture.CaptureServerControl;
 import io.github.mike10004.httpcapture.HarCaptureMonitor;
 import io.github.mike10004.httpcapture.ImmutableHttpRequest;
 import io.github.mike10004.httpcapture.ImmutableHttpResponse;
+import io.github.mike10004.httpcapture.explode.HarExploder;
 import net.lightbody.bmp.core.har.Har;
 import org.apache.commons.io.FileUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import javax.annotation.Nullable;
+import java.io.File;
 import java.io.IOException;
+import java.io.StringReader;
 import java.io.Writer;
 import java.nio.file.Path;
 import java.util.ArrayList;
-import java.util.Collection;
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 import java.util.concurrent.CountDownLatch;
@@ -35,25 +45,73 @@ class HttpCaptureProgram {
     }
 
     public int execute() throws IOException, InterruptedException {
+        if (config.explode && config.explodeInput != null) {
+            return justExplode(config.explodeInput);
+        }
+        return serve();
+    }
+
+    public int serve() throws IOException, InterruptedException {
         BasicCaptureServer.Builder builder = BasicCaptureServer.builder();
         Path tempdir = java.nio.file.Files.createTempDirectory(config.tempdirParent, "http-capture-trust");
         builder.collectHttps(new AutoCertificateAndKeySource(tempdir));
         CaptureServer server = builder.build();
-        HarCaptureMonitor monitor = new HarCaptureMonitor() {
-            @Override
-            public void responseReceived(ImmutableHttpRequest httpRequest, ImmutableHttpResponse httpResponse) {
-
-            }
-        };
+        HarCaptureMonitor monitor = createMonitor();
         CaptureServerControl ctrl = server.start(monitor, config.port);
         serverStarted(ctrl);
         OutputSink outputSink = OutputSink.toFileInParent(config.outputParent, config.charset);
-        List<Runnable> postCompletionActions = new ArrayList<>();
-        postCompletionActions.add(makeDeleteDirAction(tempdir));
-        SigtermHook hook = new SigtermHook(ctrl, monitor, outputSink, postCompletionActions);
+        SigtermHook hook = new SigtermHook(ctrl, monitor, outputSink);
+        hook.addPostCompletionAction(makeDeleteDirAction(tempdir));
         getRuntime().addShutdownHook(new Thread(hook.asRunnable()));
         config.stderr.format("http-capture: ready; listening on port %d%n", ctrl.getPort());
+        if (config.browser != null) {
+            Iterable<String> browserArgs = tokenize(config.browserArgs);
+            //noinspection unused // TODO: provide an alternate method to initate orderly shutdown using this monitor
+            BrowserProcessTracker processTracker = new BrowserProcessTracker();
+            hook.addPostCompletionAction(processTracker.createCleanupAction());
+            ProcessMonitor<?, ?> processMon = config.browser.getSupport(config)
+                    .prepare(tempdir)
+                    .launch(getServerAddress(ctrl), browserArgs, processTracker);
+            // TODO optionally stop server when browser process terminates
+            log.debug("{}", processMon);
+        }
         waitForSignal();
+        return 0;
+    }
+
+    private class BrowserProcessTracker extends ScopedProcessTracker {
+
+        public Runnable createCleanupAction() {
+            return () -> {
+                if (!config.keepBrowserOpen) {
+                    List<?> remaining = BrowserProcessTracker.this.destroyAll();
+                    if (!remaining.isEmpty()) {
+                        log.warn("{} processes remaining even though we tried to kill them", remaining.size());
+                    }
+                }
+            };
+        }
+    }
+
+    private HostAndPort getServerAddress(CaptureServerControl ctrl) {
+        return HostAndPort.fromParts("127.0.0.1", ctrl.getPort());
+    }
+
+    public int justExplode(String pathname) throws IOException {
+        if (pathname.isEmpty()) {
+            config.stderr.println("http-capture: input HAR pathname must be nonempty");
+            return 1;
+        }
+        File inputFile;
+        try {
+            inputFile = new File(pathname);
+        } catch (IllegalArgumentException e) {
+            config.stderr.println("http-capture: invalid input file pathname");
+            return 1;
+        }
+        HarExploder exploder = new HarExploder();
+        CharSource harSource = com.google.common.io.Files.asCharSource(inputFile, config.charset);
+        exploder.explode(harSource, config.outputParent);
         return 0;
     }
 
@@ -137,11 +195,11 @@ class HttpCaptureProgram {
 
         private final List<Runnable> postCompletionActions;
 
-        public SigtermHook(CaptureServerControl serverControl, HarCaptureMonitor monitor, OutputSink outputSink, Collection<Runnable> postCompletionActions) {
+        public SigtermHook(CaptureServerControl serverControl, HarCaptureMonitor monitor, OutputSink outputSink) {
             this.serverControl = serverControl;
             this.monitor = monitor;
             this.outputSink = outputSink;
-            this.postCompletionActions = Collections.unmodifiableList(new ArrayList<>(postCompletionActions));
+            this.postCompletionActions = Collections.synchronizedList(new ArrayList<>());
         }
 
         public Runnable asRunnable() {
@@ -167,7 +225,7 @@ class HttpCaptureProgram {
                 config.stderr.println("http-capture: error during completion phase");
                 e.printStackTrace(config.stderr);
             } finally {
-                postCompletionActions.forEach(action -> {
+                new ArrayList<>(postCompletionActions).forEach(action -> {
                     try {
                         action.run();
                     } catch (Exception e) {
@@ -177,6 +235,25 @@ class HttpCaptureProgram {
             }
         }
 
+        public void addPostCompletionAction(Runnable r) {
+            requireNonNull(r, "action must be non-null");
+            postCompletionActions.add(r);
+        }
+
+    }
+
+    protected Iterable<String> tokenize(@Nullable String value) {
+        if (value == null) {
+            return ImmutableList.of();
+        }
+        List<String> args = new ArrayList<>();
+        try (CSVReader reader = new CSVReader(new StringReader(value))) {
+            List<String[]> rows = reader.readAll();
+            rows.forEach(row -> args.addAll(Arrays.asList(row)));
+        } catch (IOException e) {
+            log.warn("failed to tokenize arguments from " + value, e);
+        }
+        return args;
     }
 
 }

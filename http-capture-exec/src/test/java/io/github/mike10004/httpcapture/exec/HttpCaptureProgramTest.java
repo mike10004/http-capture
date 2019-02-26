@@ -51,7 +51,7 @@ public class HttpCaptureProgramTest {
                 throw new AssertionError(e);
             }
         });
-        program.latches.forEach(CountDownLatch::countDown);
+        program.sigtermLatch.countDown();
         int exitCode = executeFuture.get(10, TimeUnit.SECONDS);
         assertEquals("exit code", 0, exitCode);
         File outputFile = java.nio.file.Files.walk(program.config.outputParent)
@@ -75,7 +75,7 @@ public class HttpCaptureProgramTest {
     private static class UnitTestProgram extends HttpCaptureProgram {
 
         public final FakeRuntime rt = new FakeRuntime();
-        public final List<CountDownLatch> latches = new CopyOnWriteArrayList<>();
+        public final CountDownLatch sigtermLatch = new CountDownLatch(1);
         public final StreamBucket stdoutBucket, stderrBucket;
         public final HttpCaptureConfig config;
 
@@ -108,11 +108,10 @@ public class HttpCaptureProgramTest {
         }
 
         @Override
-        protected CountDownLatch makeLatch() {
-            CountDownLatch latch = super.makeLatch();
-            latches.add(latch);
-            return latch;
+        protected void waitForSignal() throws InterruptedException {
+            sigtermLatch.await();
         }
+
     }
 
 }

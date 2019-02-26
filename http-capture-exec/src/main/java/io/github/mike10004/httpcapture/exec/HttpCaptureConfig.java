@@ -8,6 +8,7 @@ import java.io.PrintStream;
 import java.nio.charset.Charset;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Path;
+import java.util.Optional;
 import java.util.function.Function;
 
 /**
@@ -32,6 +33,21 @@ class HttpCaptureConfig {
     public InterceptMode interceptMode = InterceptMode.REPORT;
 
     public CaptureMode captureMode = CaptureMode.WRITE_HAR;
+
+    public boolean explode;
+
+    @Nullable
+    public String explodeInput;
+
+    @Nullable
+    public Browser browser;
+
+    @Nullable
+    public String browserArgs;
+
+    public boolean echoBrowserOutput;
+
+    public boolean keepBrowserOpen;
 
     public enum InterceptMode {
 
