@@ -11,7 +11,7 @@ import java.util.Arrays;
 public class HttpCaptureMain {
 
     private static final String OPT_PORT = "port";
-    private static final String OPT_EXPLODE = "explode";
+    private static final String OPT_EXPORT = "export";
     private static final String OPT_OUTPUT_DIR = "output-dir";
     private static final String OPT_BROWSER = "browser";
     private static final String OPT_KEEP_BROWSER_OPEN = "keep-browser-open";
@@ -27,7 +27,7 @@ public class HttpCaptureMain {
         parser.acceptsAll(Arrays.asList("h", "help"), "print help and exit").forHelp();
         parser.acceptsAll(Arrays.asList("p", OPT_PORT), "listen on specified port")
                 .withRequiredArg().ofType(Integer.class).describedAs("PORT");
-        parser.acceptsAll(Arrays.asList("x", OPT_EXPLODE), "explode HAR file")
+        parser.acceptsAll(Arrays.asList("x", OPT_EXPORT), "export data from captured or existing HAR file")
                 .withOptionalArg().ofType(String.class).describedAs("FILE");
         parser.acceptsAll(Arrays.asList("d", OPT_OUTPUT_DIR), "set output directory")
                 .withRequiredArg().ofType(String.class).describedAs("DIR");
@@ -57,8 +57,8 @@ public class HttpCaptureMain {
         if (options.has(OPT_OUTPUT_DIR)) {
             config.outputParent = new File((String)options.valueOf(OPT_OUTPUT_DIR)).toPath();
         }
-        config.explode = options.has(OPT_EXPLODE);
-        config.explodeInput = (String) options.valueOf(OPT_EXPLODE);
+        config.explode = options.has(OPT_EXPORT);
+        config.explodeInput = (String) options.valueOf(OPT_EXPORT);
         config.browser = (Browser) options.valueOf(OPT_BROWSER);
         config.browserArgs = (String) options.valueOf(OPT_BROWSER_ARGS);
         config.keepBrowserOpen = options.has(OPT_KEEP_BROWSER_OPEN);

@@ -54,15 +54,15 @@ import static java.util.Objects.requireNonNull;
     }
 ]
  */
-public class HarExploder {
+public class HarExporter {
 
-    public void explode(CharSource harSource, Path outputRoot) throws IOException {
+    public void export(CharSource harSource, Path outputRoot) throws IOException {
         try (Reader reader = harSource.openStream()) {
-            explode(new JsonParser().parse(reader), outputRoot);
+            export(new JsonParser().parse(reader), outputRoot);
         }
     }
 
-    protected void explode(JsonElement harObject, Path outputRoot) throws IOException {
+    protected void export(JsonElement harObject, Path outputRoot) throws IOException {
         //noinspection ResultOfMethodCallIgnored
         outputRoot.toFile().mkdirs();
         if (!outputRoot.toFile().isDirectory()) {
@@ -71,7 +71,7 @@ public class HarExploder {
         Path scratchDir = java.nio.file.Files.createTempDirectory(outputRoot, ".scratch-directory");
         try {
             IntermediateRep intermediateRep = createIntermediateRep(harObject, scratchDir);
-            explode(intermediateRep, outputRoot);
+            export(intermediateRep, outputRoot);
         } finally {
             FileUtils.deleteDirectory(scratchDir.toFile());
         }
@@ -96,7 +96,7 @@ public class HarExploder {
         return new IntermediateRep(cachedEntries);
     }
 
-    protected void explode(IntermediateRep intermediateRep, Path outputRoot) throws IOException {
+    protected void export(IntermediateRep intermediateRep, Path outputRoot) throws IOException {
         Path entriesRoot = outputRoot.resolve("log").resolve("entries");
         //noinspection ResultOfMethodCallIgnored
         entriesRoot.toFile().mkdirs();
@@ -134,7 +134,7 @@ public class HarExploder {
             }
             return host + (uri.getPath());
         } catch (RuntimeException e) {
-            LoggerFactory.getLogger(HarExploder.class).info("failed to normalize {}", StringUtils.abbreviate(url, 128));
+            LoggerFactory.getLogger(HarExporter.class).info("failed to normalize {}", StringUtils.abbreviate(url, 128));
             return url;
         }
     }

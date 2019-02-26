@@ -14,9 +14,10 @@ import io.github.mike10004.httpcapture.CaptureServerControl;
 import io.github.mike10004.httpcapture.HarCaptureMonitor;
 import io.github.mike10004.httpcapture.ImmutableHttpRequest;
 import io.github.mike10004.httpcapture.ImmutableHttpResponse;
-import io.github.mike10004.httpcapture.explode.HarExploder;
+import io.github.mike10004.httpcapture.explode.HarExporter;
 import net.lightbody.bmp.core.har.Har;
 import org.apache.commons.io.FileUtils;
+import org.apache.commons.io.FilenameUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -46,7 +47,7 @@ class HttpCaptureProgram {
 
     public int execute() throws IOException, InterruptedException {
         if (config.explode && config.explodeInput != null) {
-            return justExplode(config.explodeInput);
+            return export(config.explodeInput, config.outputParent);
         }
         return serve();
     }
@@ -97,7 +98,7 @@ class HttpCaptureProgram {
         return HostAndPort.fromParts("127.0.0.1", ctrl.getPort());
     }
 
-    public int justExplode(String pathname) throws IOException {
+    public int export(String pathname, Path destination) throws IOException {
         if (pathname.isEmpty()) {
             config.stderr.println("http-capture: input HAR pathname must be nonempty");
             return 1;
@@ -109,9 +110,9 @@ class HttpCaptureProgram {
             config.stderr.println("http-capture: invalid input file pathname");
             return 1;
         }
-        HarExploder exploder = new HarExploder();
+        HarExporter exploder = new HarExporter();
         CharSource harSource = com.google.common.io.Files.asCharSource(inputFile, config.charset);
-        exploder.explode(harSource, config.outputParent);
+        exploder.export(harSource, destination);
         return 0;
     }
 
@@ -217,6 +218,18 @@ class HttpCaptureProgram {
                             har.writeTo(out);
                         }
                         config.stderr.format("http-capture: wrote %s%n", outputSink.describe());
+                        if (config.explode) {
+                            File harFile = outputSink.mostRecentFile();
+                            if (harFile != null) {
+                                String subdirName = FilenameUtils.getBaseName(harFile.getAbsolutePath());
+                                File exportDir = config.outputParent.resolve(subdirName).toFile();
+                                //noinspection ResultOfMethodCallIgnored
+                                exportDir.mkdirs();
+                                export(harFile.getAbsolutePath(), exportDir.toPath());
+                            } else {
+                                log.error("output sink did not create a file");
+                            }
+                        }
                     }
                 } else {
                     config.stderr.println("http-capture: server never started; not writing output file");

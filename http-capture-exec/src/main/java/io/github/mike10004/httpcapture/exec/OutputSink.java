@@ -2,6 +2,7 @@ package io.github.mike10004.httpcapture.exec;
 
 import net.lightbody.bmp.core.har.Har;
 
+import javax.annotation.Nullable;
 import java.io.File;
 import java.io.FileOutputStream;
 import java.io.IOException;
@@ -18,6 +19,11 @@ public interface OutputSink {
 
     Writer openStream(Har har) throws IOException;
 
+    @Nullable
+    default File mostRecentFile() {
+        return null;
+    }
+
     default String describe() {
         return toString();
     }
@@ -31,17 +37,23 @@ public interface OutputSink {
         private final Path parentDir;
         private final Charset charset;
         private final DateFormat dateFormat = new SimpleDateFormat("yyyyMMdd'T'HHmmss");
-        private String description;
+        private File mostRecentFile;
 
         public FileOutputSink(Path parentDir, Charset charset) {
             this.parentDir = parentDir;
             this.charset = charset;
         }
 
+        @Nullable
+        @Override
+        public File mostRecentFile() {
+            return mostRecentFile;
+        }
+
         @Override
         public Writer openStream(Har har) throws IOException {
             File outputFile = parentDir.resolve(constructFilename(har)).toFile();
-            description = outputFile.getAbsolutePath();
+            mostRecentFile = outputFile;
             com.google.common.io.Files.createParentDirs(outputFile);
             return new OutputStreamWriter(new FileOutputStream(outputFile), charset);
         }
@@ -56,11 +68,11 @@ public interface OutputSink {
 
         @Override
         public String describe() {
-            String description = this.description;
-            if (description == null) {
+            File mostRecentFile = this.mostRecentFile;
+            if (mostRecentFile == null) {
                 return "file in " + parentDir;
             }
-            return description;
+            return mostRecentFile.getAbsolutePath();
         }
     }
 }
