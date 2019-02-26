@@ -11,6 +11,7 @@
         <module>http-capture-lib</module>
         <module>http-capture-exec</module>
         <module>http-capture-dist</module>
+        <module>http-capture-testing</module>
     </modules>
     <packaging>pom</packaging>
 
@@ -74,10 +75,20 @@
                 <plugin>
                     <artifactId>maven-surefire-plugin</artifactId>
                     <version>2.22.1</version>
+                    <configuration>
+                        <systemPropertyVariables>
+                            <java.io.tmpdir>${project.build.directory}</java.io.tmpdir>
+                        </systemPropertyVariables>
+                    </configuration>
                 </plugin>
                 <plugin>
                     <artifactId>maven-failsafe-plugin</artifactId>
                     <version>2.22.1</version>
+                    <configuration>
+                        <systemPropertyVariables>
+                            <java.io.tmpdir>${project.build.directory}</java.io.tmpdir>
+                        </systemPropertyVariables>
+                    </configuration>
                 </plugin>
                 <plugin>
                     <artifactId>maven-jar-plugin</artifactId>

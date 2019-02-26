@@ -24,8 +24,8 @@ public class HttpCaptureMain {
             return 0;
         }
         HttpCaptureConfig config = parameterizeConfig(parser, options);
-        HttpCaptureProgram program = new HttpCaptureProgram(config.stdout, config.stderr);
-        int exitCode = program.execute(config);
+        HttpCaptureProgram program = new HttpCaptureProgram(config);
+        int exitCode = program.execute();
         return exitCode;
     }
 

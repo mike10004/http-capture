@@ -9,6 +9,9 @@ import java.nio.charset.StandardCharsets;
 import java.nio.file.Path;
 import java.util.function.Function;
 
+/**
+ * TODO move to final/builder pattern for config
+ */
 class HttpCaptureConfig {
     public Integer port = null;
     public PrintStream stdout = System.out;

@@ -1,5 +1,6 @@
 package io.github.mike10004.httpcapture.exec;
 
+import io.github.mike10004.httpcapture.testing.StreamBucket;
 import org.junit.Test;
 
 import java.io.PrintStream;
