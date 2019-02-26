@@ -6,7 +6,7 @@ JAVA=${JAVA:-java}
 PREFIX=${PREFIX:-/usr/share}
 
 which "${JAVA}" > /dev/null
-if [ $? -ne 0 ] ; then
+if [[ $? -ne 0 ]] ; then
   echo "${PROG}: no ${JAVA} on path" >&2
   exit 2
 fi

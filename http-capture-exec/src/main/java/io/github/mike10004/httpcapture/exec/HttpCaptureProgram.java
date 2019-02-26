@@ -46,8 +46,8 @@ class HttpCaptureProgram {
     }
 
     public int execute() throws IOException, InterruptedException {
-        if (config.explode && config.explodeInput != null) {
-            return export(config.explodeInput, config.outputParent);
+        if (config.export && config.exportInputPathname != null) {
+            return export(config.exportInputPathname, config.outputParent);
         }
         return serve();
     }
@@ -218,7 +218,7 @@ class HttpCaptureProgram {
                             har.writeTo(out);
                         }
                         config.stderr.format("http-capture: wrote %s%n", outputSink.describe());
-                        if (config.explode) {
+                        if (config.export) {
                             File harFile = outputSink.mostRecentFile();
                             if (harFile != null) {
                                 String subdirName = FilenameUtils.getBaseName(harFile.getAbsolutePath());

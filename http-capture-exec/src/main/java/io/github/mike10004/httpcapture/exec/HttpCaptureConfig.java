@@ -34,10 +34,10 @@ class HttpCaptureConfig {
 
     public CaptureMode captureMode = CaptureMode.WRITE_HAR;
 
-    public boolean explode;
+    public boolean export;
 
     @Nullable
-    public String explodeInput;
+    public String exportInputPathname;
 
     @Nullable
     public Browser browser;

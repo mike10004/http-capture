@@ -57,8 +57,8 @@ public class HttpCaptureMain {
         if (options.has(OPT_OUTPUT_DIR)) {
             config.outputParent = new File((String)options.valueOf(OPT_OUTPUT_DIR)).toPath();
         }
-        config.explode = options.has(OPT_EXPORT);
-        config.explodeInput = (String) options.valueOf(OPT_EXPORT);
+        config.export = options.has(OPT_EXPORT);
+        config.exportInputPathname = (String) options.valueOf(OPT_EXPORT);
         config.browser = (Browser) options.valueOf(OPT_BROWSER);
         config.browserArgs = (String) options.valueOf(OPT_BROWSER_ARGS);
         config.keepBrowserOpen = options.has(OPT_KEEP_BROWSER_OPEN);

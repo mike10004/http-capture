@@ -194,7 +194,7 @@
                         <id>fix-permissions</id>
                         <phase>package</phase>
                         <configuration>
-                            <tasks>
+                            <target>
                                 <chmod perm="0755" verbose="true">
                                     <fileset dir="${project.build.directory}/deb">
                                         <include name="**/bin/*"/>
@@ -203,7 +203,7 @@
                                         <include name="DEBIAN/pre*"/>
                                     </fileset>
                                 </chmod>
-                            </tasks>
+                            </target>
                         </configuration>
                         <goals><goal>run</goal></goals>
                     </execution>
@@ -213,12 +213,12 @@
                             <goal>run</goal>
                         </goals>
                         <configuration>
-                            <tasks>
+                            <target>
                                 <!--suppress MavenModelInspection -->
                                 <echo>project.isSnapshotBuild=${project.isSnapshotBuild}</echo>
                                 <!--suppress MavenModelInspection -->
                                 <echo>project.isReleaseBuild=${project.isReleaseBuild}</echo>
-                            </tasks>
+                            </target>
                         </configuration>
                     </execution>
                 </executions>

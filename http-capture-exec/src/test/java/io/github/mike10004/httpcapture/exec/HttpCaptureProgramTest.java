@@ -3,11 +3,13 @@ package io.github.mike10004.httpcapture.exec;
 import com.google.common.io.Files;
 import com.google.common.net.HostAndPort;
 import io.github.mike10004.httpcapture.CaptureServerControl;
+import io.github.mike10004.httpcapture.testing.HarTestCase;
 import io.github.mike10004.httpcapture.testing.StreamBucket;
 import io.github.mike10004.httpcapture.testing.TestClients;
-import org.apache.commons.io.FileUtils;
 import org.apache.http.client.methods.HttpGet;
+import org.junit.Rule;
 import org.junit.Test;
+import org.junit.rules.TemporaryFolder;
 
 import java.io.File;
 import java.io.IOException;
@@ -22,12 +24,16 @@ import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
 
-import static org.junit.Assert.*;
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertTrue;
 
 public class HttpCaptureProgramTest {
 
+    @Rule
+    public TemporaryFolder temporaryFolder = new TemporaryFolder();
+
     @Test
-    public void execute() throws Exception {
+    public void execute_serve() throws Exception {
         AtomicInteger portHolder = new AtomicInteger();
         CountDownLatch portReceivedLatch = new CountDownLatch(1);
         UnitTestProgram program = new UnitTestProgram() {
@@ -72,7 +78,14 @@ public class HttpCaptureProgramTest {
         }
     }
 
-    private static class UnitTestProgram extends HttpCaptureProgram {
+    private HttpCaptureConfig parameterizeConfig(HttpCaptureConfig config, PrintStream stdout, PrintStream stderr) throws IOException {
+        config.stdout = stdout;
+        config.stderr = stderr;
+        config.outputParent = temporaryFolder.newFolder().toPath();
+        return config;
+    }
+
+    private class UnitTestProgram extends HttpCaptureProgram {
 
         public final FakeRuntime rt = new FakeRuntime();
         public final CountDownLatch sigtermLatch = new CountDownLatch(1);
@@ -84,22 +97,14 @@ public class HttpCaptureProgramTest {
         }
 
         private UnitTestProgram(StreamBucket stdout, StreamBucket stderr) throws IOException {
-            this(stdout, stderr, makeConfig(stdout, stderr));
+            this(parameterizeConfig(new HttpCaptureConfig(), stdout, stderr));
         }
 
-        private UnitTestProgram(StreamBucket stdout, StreamBucket stderr, HttpCaptureConfig config) {
+        public UnitTestProgram(HttpCaptureConfig config) {
             super(config);
-            this.stdoutBucket = stdout;
-            this.stderrBucket = stderr;
+            this.stdoutBucket = (StreamBucket) config.stdout;
+            this.stderrBucket = (StreamBucket) config.stderr;
             this.config = config;
-        }
-
-        private static HttpCaptureConfig makeConfig(PrintStream stdout, PrintStream stderr) throws IOException {
-            HttpCaptureConfig config = new HttpCaptureConfig();
-            config.stdout = stdout;
-            config.stderr = stderr;
-            config.outputParent = java.nio.file.Files.createTempDirectory(FileUtils.getTempDirectory().toPath(), "unit-test-output");
-            return config;
         }
 
         @Override
@@ -114,4 +119,19 @@ public class HttpCaptureProgramTest {
 
     }
 
+    @Test
+    public void execute_export() throws Exception {
+        HarTestCase testCase = new HarTestCase("/example-captured.har");
+        File harFile = testCase.getPathname(temporaryFolder.getRoot().toPath());
+        HttpCaptureConfig config = new HttpCaptureConfig();
+        config.stdout = new StreamBucket();
+        config.stderr = new StreamBucket();
+        config.export = true;
+        config.exportInputPathname = harFile.getAbsolutePath();
+        config.outputParent = temporaryFolder.newFolder().toPath();
+        UnitTestProgram program = new UnitTestProgram(config);
+        int exitCode = program.execute();
+        assertEquals("exit code", 0, exitCode);
+        testCase.checkExport(config.outputParent);
+    }
 }
