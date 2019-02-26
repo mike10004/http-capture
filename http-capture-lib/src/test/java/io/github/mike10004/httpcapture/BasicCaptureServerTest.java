@@ -1,5 +1,6 @@
 package io.github.mike10004.httpcapture;
 
+import com.google.common.base.Strings;
 import com.google.common.io.Files;
 import com.google.common.net.HostAndPort;
 import net.lightbody.bmp.core.har.Har;
@@ -13,6 +14,7 @@ import javax.net.ssl.SSLContext;
 import java.io.File;
 import java.net.URL;
 import java.util.List;
+import java.util.Objects;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.Function;
@@ -106,8 +108,11 @@ public class BasicCaptureServerTest {
             har.getLog().getEntries().forEach(entry -> {
                 System.out.format("%d %s %s", entry.getResponse().getStatus(), entry.getRequest().getMethod(), entry.getRequest().getUrl());
             });
-            String harHtml = har.getLog().getEntries().stream().filter(entry -> entry.getRequest().getUrl().equals(mainUrl.toString()))
-                    .map(entry -> entry.getResponse().getContent().getText())
+            String harHtml = har.getLog().getEntries().stream()
+                    .filter(Objects::nonNull)
+                    .filter(entry -> entry.getRequest() != null)
+                    .filter(entry -> entry.getRequest().getUrl().equals(mainUrl.toString()))
+                    .map(entry -> Strings.nullToEmpty(entry.getResponse().getContent().getText()))
                     .findFirst().orElseThrow(() -> new AssertionError("no entry with URL equal to " + mainUrl));
             assertEquals("html", html, harHtml);
         }

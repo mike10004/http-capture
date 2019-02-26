@@ -91,9 +91,6 @@ public class BasicCaptureServer implements CaptureServer {
         configureProxy(bmp, certificateAndKeySource, monitor);
         bmp.enableHarCaptureTypes(getCaptureTypes());
         bmp.newHar();
-        if (port != null) {
-            throw new IllegalArgumentException("specifying port not currently supported");
-        }
         if (port == null) {
             bmp.start();
         } else {
