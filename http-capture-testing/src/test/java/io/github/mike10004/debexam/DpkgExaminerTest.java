@@ -26,7 +26,7 @@ public class DpkgExaminerTest {
     @Test
     public void examine() throws Exception {
         File debFile = new File(getClass().getResource("/hello_2.10-1build1_amd64.deb").toURI());
-        DpkgExaminer examiner = new DpkgExaminer(temporaryFolder.getRoot().toPath());
+        DpkgExaminer examiner = new DpkgExaminer(temporaryFolder.getRoot().toPath(), DpkgExaminer.ExtractionMode.TEMPORARY);
         String controlText;
         String binHelloSha256sum;
         Set<String> dataFilesActual;

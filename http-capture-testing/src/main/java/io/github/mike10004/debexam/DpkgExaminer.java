@@ -21,19 +21,33 @@ import static java.util.Objects.requireNonNull;
 
 public class DpkgExaminer implements DebExaminer {
 
-    private final Path parentForTempDir;
+    private final Path extractionParent;
+    private final ExtractionMode extractionMode;
 
     public DpkgExaminer() {
-        this(FileUtils.getTempDirectory().toPath());
+        this(FileUtils.getTempDirectory().toPath(), ExtractionMode.TEMPORARY);
     }
 
-    public DpkgExaminer(Path parentForTempDir) {
-        this.parentForTempDir = requireNonNull(parentForTempDir);
+    public DpkgExaminer(Path extractionParent, ExtractionMode mode) {
+        this.extractionMode = requireNonNull(mode);
+        this.extractionParent = requireNonNull(extractionParent);
     }
 
     @Override
     public DebExamination examine(File debFile) throws IOException {
-        return DpkgExamination.extract(debFile, parentForTempDir);
+        if (extractionMode == ExtractionMode.PERSISTENT) {
+            Path controlRoot = extractionParent.resolve("control");
+            Path dataRoot = extractionParent.resolve("data");
+            return DpkgExamination.extractPersistently(debFile, controlRoot, dataRoot);
+        } else {
+            return DpkgExamination.extractTemporarily(debFile, extractionParent);
+        }
+
+    }
+
+    public enum ExtractionMode {
+        TEMPORARY,
+        PERSISTENT
     }
 
     static String parseDpkgInfoVersion(String infoText) {
@@ -52,11 +66,11 @@ public class DpkgExaminer implements DebExaminer {
 
     private static class DpkgExamination implements DebExamination {
 
-        private final TemporaryDirectory extractionRoot;
+        private final java.io.Closeable finishAction;
         private final DebModel model;
 
-        public DpkgExamination(TemporaryDirectory extractionRoot, DpkgExtraction extraction) {
-            this.extractionRoot = requireNonNull(extractionRoot);
+        public DpkgExamination(java.io.Closeable finishAction, DpkgExtraction extraction) {
+            this.finishAction = requireNonNull(finishAction);
             this.model = requireNonNull(extraction);
         }
 
@@ -67,11 +81,11 @@ public class DpkgExaminer implements DebExaminer {
 
         @Override
         public void close() throws IOException {
-            this.extractionRoot.close();
+            this.finishAction.close();
         }
 
         @Nullable
-        private static String runClean(String executable, String[] args, boolean collectStdout) throws IOException, InterruptedException {
+        private static String runClean(String executable, String[] args, boolean collectStdout) throws IOException {
             Subprocess subprocess = Subprocess.running(executable)
                     .args(Arrays.asList(args))
                     .build();
@@ -90,6 +104,8 @@ public class DpkgExaminer implements DebExaminer {
                             .launch().await();
                     content = null;
                 }
+            } catch (InterruptedException e) {
+                throw new IOException("error waiting for subprocess to terminate", e);
             }
             if (result_.exitCode() != 0) {
                 throw new IOException("dpkg --extract failed with code " + result_.exitCode());
@@ -97,18 +113,14 @@ public class DpkgExaminer implements DebExaminer {
             return content;
         }
 
-        public static DpkgExamination extract(File debFile, Path tempParent_) throws IOException {
+        public static DpkgExamination extractTemporarily(File debFile, Path tempParent_) throws IOException {
             TemporaryDirectory tempDir = TemporaryDirectory.create(tempParent_);
             Path workingArea = tempDir.getRoot();
             DpkgExtraction extraction;
             try {
                 Path controlRoot = workingArea.resolve("control");
-                runClean("dpkg", new String[]{"--control", debFile.getAbsolutePath(), controlRoot.toString()}, false);
                 Path dataRoot = workingArea.resolve("data");
-                runClean("dpkg", new String[]{"--extract", debFile.getAbsolutePath(), dataRoot.toString()}, false);
-                String infoText = runClean("dpkg", new String[]{"--info", debFile.getAbsolutePath()}, true);
-                String versionStr = parseDpkgInfoVersion(infoText) + "\n";
-                extraction = DpkgExtraction.onDisk(versionStr, controlRoot, dataRoot);
+                extraction = doExtract(debFile, controlRoot, dataRoot);
             } catch (Exception e) {
                 try {
                     tempDir.close();
@@ -117,12 +129,26 @@ public class DpkgExaminer implements DebExaminer {
                 if (e instanceof IOException) {
                     throw (IOException)e;
                 }
-                if (e instanceof RuntimeException && !(e instanceof ProcessException)) {
+                if (!(e instanceof ProcessException)) {
                     throw (RuntimeException)e;
                 }
                 throw new IOException(e);
             }
             return new DpkgExamination(tempDir, extraction);
+        }
+
+        public static DpkgExamination extractPersistently(File debFile, Path controlRoot, Path dataRoot) throws IOException {
+            DpkgExtraction extraction = doExtract(debFile, controlRoot, dataRoot);
+            DpkgExamination examination = new DpkgExamination(() -> {}, extraction);
+            return examination;
+        }
+
+        private static DpkgExtraction doExtract(File debFile, Path controlRoot, Path dataRoot) throws IOException {
+            runClean("dpkg", new String[]{"--control", debFile.getAbsolutePath(), controlRoot.toString()}, false);
+            runClean("dpkg", new String[]{"--extract", debFile.getAbsolutePath(), dataRoot.toString()}, false);
+            String infoText = runClean("dpkg", new String[]{"--info", debFile.getAbsolutePath()}, true);
+            String versionStr = parseDpkgInfoVersion(infoText) + "\n";
+            return DpkgExtraction.onDisk(versionStr, controlRoot, dataRoot);
         }
     }
 
