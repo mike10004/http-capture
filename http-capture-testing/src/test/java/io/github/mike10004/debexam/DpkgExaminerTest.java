@@ -36,6 +36,7 @@ public class DpkgExaminerTest {
                 "usr/share/doc/hello/copyright",
                 "usr/share/doc/hello/changelog.Debian.gz",
                 "usr/share/doc/hello/NEWS.gz"));
+        String actualVersionAscii;
         try (DebExamination examination = examiner.examine(debFile)) {
             DebModel model = examination.getModel();
             ByteSource controlBytes = model.getControl().getFilesystem().getFile("control");
@@ -46,6 +47,7 @@ public class DpkgExaminerTest {
             ByteSource binHelloBytes = dataFilesystem.getFile("usr/bin/hello");
             assertNotNull("usr/bin/hello", binHelloBytes);
             binHelloSha256sum = binHelloBytes.hash(Hashing.sha256()).toString().toLowerCase();
+            actualVersionAscii = model.getVersionAscii();
         } catch (IOException e) {
             e.printStackTrace(System.err);
             throw new AssertionError(e);
@@ -57,5 +59,37 @@ public class DpkgExaminerTest {
         assertEquals("package name", "hello", packageName);
         assertEquals("/usr/bin/hello sha256sum", "8b3156dc995e82ec1b26d9ee44e6856e61d308b701cfc0c5ec2154e286fb7c0b", binHelloSha256sum);
         assertEquals("data files", dataFilesExpected, dataFilesActual);
+        assertEquals("version ascii", "2.0\n", actualVersionAscii);
+    }
+
+    @Test
+    public void parseVersion() throws Exception {
+        String infoText = " new Debian package, version 2.0.\n" +
+                " size 27248 bytes: control archive=879 bytes.\n" +
+                "     841 bytes,    21 lines      control              \n" +
+                "     375 bytes,     6 lines      md5sums              \n" +
+                " Package: hello\n" +
+                " Version: 2.10-1build1\n" +
+                " Architecture: amd64\n" +
+                " Maintainer: Ubuntu Developers <ubuntu-devel-discuss@lists.ubuntu.com>\n" +
+                " Original-Maintainer: Santiago Vila <sanvila@debian.org>\n" +
+                " Installed-Size: 108\n" +
+                " Depends: libc6 (>= 2.14)\n" +
+                " Conflicts: hello-traditional\n" +
+                " Breaks: hello-debhelper (<< 2.9)\n" +
+                " Replaces: hello-debhelper (<< 2.9), hello-traditional\n" +
+                " Section: devel\n" +
+                " Priority: optional\n" +
+                " Homepage: http://www.gnu.org/software/hello/\n" +
+                " Description: example package based on GNU hello\n" +
+                "  The GNU hello program produces a familiar, friendly greeting.  It\n" +
+                "  allows non-programmers to use a classic computer science tool which\n" +
+                "  would otherwise be unavailable to them.\n" +
+                "  .\n" +
+                "  Seriously, though: this is an example of how to do a Debian package.\n" +
+                "  It is the Debian version of the GNU Project's `hello world' program\n" +
+                "  (which is itself an example for the GNU Project).\n";
+        String versionTrimmed = DpkgExaminer.parseDpkgInfoVersion(infoText);
+        assertEquals("version", "2.0", versionTrimmed);
     }
 }

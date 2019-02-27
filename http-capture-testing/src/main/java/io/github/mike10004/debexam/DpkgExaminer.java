@@ -4,6 +4,7 @@ import com.github.mike10004.nativehelper.subprocess.ProcessException;
 import com.github.mike10004.nativehelper.subprocess.ProcessResult;
 import com.github.mike10004.nativehelper.subprocess.ScopedProcessTracker;
 import com.github.mike10004.nativehelper.subprocess.Subprocess;
+import com.google.common.io.CharSource;
 import io.github.mike10004.httpcapture.testing.TemporaryDirectory;
 import org.apache.commons.io.FileUtils;
 
@@ -13,6 +14,8 @@ import java.io.IOException;
 import java.nio.charset.Charset;
 import java.nio.file.Path;
 import java.util.Arrays;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 import static java.util.Objects.requireNonNull;
 
@@ -31,6 +34,20 @@ public class DpkgExaminer implements DebExaminer {
     @Override
     public DebExamination examine(File debFile) throws IOException {
         return DpkgExamination.extract(debFile, parentForTempDir);
+    }
+
+    static String parseDpkgInfoVersion(String infoText) {
+        String line1;
+        try {
+            line1 = CharSource.wrap(infoText).readLines().get(0);
+        } catch (IOException e) {
+            throw new RuntimeException(e);
+        }
+        Matcher m = Pattern.compile("^.*\\s+version\\s+(\\S+)\\.$").matcher(line1);
+        if (m.find()) {
+            return m.group(1);
+        }
+        throw new IllegalArgumentException("info text does not match expected pattern");
     }
 
     private static class DpkgExamination implements DebExamination {
@@ -89,7 +106,8 @@ public class DpkgExaminer implements DebExaminer {
                 runClean("dpkg", new String[]{"--control", debFile.getAbsolutePath(), controlRoot.toString()}, false);
                 Path dataRoot = workingArea.resolve("data");
                 runClean("dpkg", new String[]{"--extract", debFile.getAbsolutePath(), dataRoot.toString()}, false);
-                String versionStr = "2.0\n"; // TODO get this from dpkg --info outpu
+                String infoText = runClean("dpkg", new String[]{"--info", debFile.getAbsolutePath()}, true);
+                String versionStr = parseDpkgInfoVersion(infoText) + "\n";
                 extraction = DpkgExtraction.onDisk(versionStr, controlRoot, dataRoot);
             } catch (Exception e) {
                 try {
