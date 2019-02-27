@@ -6,7 +6,7 @@
 
     <groupId>com.github.mike10004</groupId>
     <artifactId>http-capture</artifactId>
-    <version>0.1</version>
+    <version>0.1-SNAPSHOT</version>
     <modules>
         <module>http-capture-lib</module>
         <module>http-capture-exec</module>
@@ -17,6 +17,28 @@
 
     <name>http-capture</name>
     <url>https://github.com/mike10004/http-capture</url>
+    <description>HTTP proxy server that captures traffic</description>
+    <inceptionYear>2019</inceptionYear>
+    <licenses>
+        <license>
+            <name>MIT License</name>
+            <url>http://opensource.org/licenses/MIT</url>
+            <distribution>repo</distribution>
+        </license>
+    </licenses>
+    <developers>
+        <developer>
+            <id>mchaberski</id>
+            <name>Mike Chaberski</name>
+            <email>mchaberski@gmail.com</email>
+            <timezone>America/New_York</timezone>
+        </developer>
+    </developers>
+    <scm>
+        <connection>scm:git:https://github.com/mike10004/http-capture.git</connection>
+        <developerConnection>scm:git:git@github.com:mike10004/http-capture.git</developerConnection>
+        <url>https://github.com/mike10004/http-capture</url>
+    </scm>
 
     <properties>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
@@ -25,6 +47,7 @@
         <maven.compiler.target>1.8</maven.compiler.target>
         <common-helper.version>8.1.0</common-helper.version>
         <slf4j.version>1.7.25</slf4j.version>
+        <build.platform.nonLinux>false</build.platform.nonLinux>
     </properties>
     <profiles>
         <profile>
@@ -56,7 +79,30 @@
                 </dependency>
             </dependencies>
         </profile>
+        <profile>
+            <id>windows-build</id>
+            <activation>
+                <os>
+                    <family>Windows</family>
+                </os>
+            </activation>
+            <properties>
+                <build.platform.windows>true</build.platform.windows>
+                <python.executable>python</python.executable>
+                <build.platform.nonLinux>true</build.platform.nonLinux>
+            </properties>
+        </profile>
     </profiles>
+    <distributionManagement>
+        <snapshotRepository>
+            <id>ossrh</id>
+            <url>https://oss.sonatype.org/content/repositories/snapshots</url>
+        </snapshotRepository>
+        <repository>
+            <id>ossrh</id>
+            <url>https://oss.sonatype.org/service/local/staging/deploy/maven2/</url>
+        </repository>
+    </distributionManagement>
     <build>
         <pluginManagement>
             <plugins>
@@ -93,6 +139,14 @@
                 <plugin>
                     <artifactId>maven-jar-plugin</artifactId>
                     <version>3.0.2</version>
+                </plugin>
+                <plugin>
+                    <artifactId>maven-source-plugin</artifactId>
+                    <version>3.0.1</version>
+                </plugin>
+                <plugin>
+                    <artifactId>maven-javadoc-plugin</artifactId>
+                    <version>3.0.1</version>
                 </plugin>
                 <plugin>
                     <artifactId>maven-install-plugin</artifactId>
@@ -150,6 +204,58 @@
                 </plugin>
             </plugins>
         </pluginManagement>
+        <plugins>
+            <plugin>
+                <artifactId>maven-source-plugin</artifactId>
+                <executions>
+                    <execution>
+                        <id>attach-sources</id>
+                        <phase>deploy</phase>
+                        <goals>
+                            <goal>jar-no-fork</goal>
+                        </goals>
+                    </execution>
+                </executions>
+            </plugin>
+            <plugin>
+                <artifactId>maven-javadoc-plugin</artifactId>
+                <executions>
+                    <execution>
+                        <id>attach-javadocs</id>
+                        <phase>deploy</phase>
+                        <goals>
+                            <goal>jar</goal>
+                        </goals>
+                    </execution>
+                </executions>
+            </plugin>
+            <plugin>
+                <artifactId>maven-gpg-plugin</artifactId>
+                <executions>
+                    <execution>
+                        <id>sign-artifacts</id>
+                        <phase>deploy</phase>
+                        <goals>
+                            <goal>sign</goal>
+                        </goals>
+                    </execution>
+                </executions>
+            </plugin>
+            <plugin>
+                <groupId>org.sonatype.plugins</groupId>
+                <artifactId>nexus-staging-maven-plugin</artifactId>
+                <extensions>true</extensions>
+                <configuration>
+                    <serverId>ossrh</serverId>
+                    <nexusUrl>https://oss.sonatype.org/</nexusUrl>
+                    <autoReleaseAfterClose>false</autoReleaseAfterClose>
+                </configuration>
+            </plugin>
+            <plugin>
+                <groupId>org.codehaus.mojo</groupId>
+                <artifactId>sonar-maven-plugin</artifactId>
+            </plugin>
+        </plugins>
     </build>
 
     <dependencyManagement>
@@ -184,6 +290,11 @@
                 <groupId>commons-io</groupId>
                 <artifactId>commons-io</artifactId>
                 <version>2.6</version>
+            </dependency>
+            <dependency>
+                <groupId>com.github.mike10004</groupId>
+                <artifactId>native-helper</artifactId>
+                <version>${common-helper.version}</version>
             </dependency>
             <dependency>
                 <groupId>com.google.code.gson</groupId>

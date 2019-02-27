@@ -5,7 +5,7 @@
     <parent>
         <artifactId>http-capture</artifactId>
         <groupId>com.github.mike10004</groupId>
-        <version>0.1</version>
+        <version>0.1-SNAPSHOT</version>
     </parent>
     <modelVersion>4.0.0</modelVersion>
 
@@ -78,6 +78,16 @@
             </plugin>
             <plugin>
                 <artifactId>maven-failsafe-plugin</artifactId>
+                <configuration>
+                    <skipTests>${build.platform.nonLinux}</skipTests>
+                    <systemPropertyVariables>
+                        <maven.project.version>${project.version}</maven.project.version>
+                        <!--suppress MavenModelInspection -->
+                        <deb.pathname.release>${project.build.directory}/${package.name}_${parsedVersion.majorVersion}.${parsedVersion.minorVersion}-${package.revision}_all.deb</deb.pathname.release>
+                        <!--suppress MavenModelInspection -->
+                        <deb.pathname.snapshot>${project.build.directory}/${package.name}_${parsedVersion.majorVersion}.${parsedVersion.minorVersion}+${maven.build.timestamp}-${package.revision}_all.deb</deb.pathname.snapshot>
+                    </systemPropertyVariables>
+                </configuration>
                 <executions>
                     <execution>
                         <id>failsafe-integration-test</id>
