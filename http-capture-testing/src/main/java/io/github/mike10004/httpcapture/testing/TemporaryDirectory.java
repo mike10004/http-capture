@@ -10,7 +10,11 @@ import static java.util.Objects.requireNonNull;
 public interface TemporaryDirectory extends java.io.Closeable {
 
     static TemporaryDirectory create() throws IOException {
-        return new TemporaryDirectoryImpl(TemporaryDirectoryImpl.createSubdirectory(FileUtils.getTempDirectory().toPath()));
+        return TemporaryDirectory.create(FileUtils.getTempDirectory().toPath());
+    }
+
+    static TemporaryDirectory create(Path parent) throws IOException {
+        return new TemporaryDirectoryImpl(TemporaryDirectoryImpl.createSubdirectory(parent));
     }
 
     Path getRoot();
