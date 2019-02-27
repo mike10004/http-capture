@@ -6,7 +6,7 @@
 
     <groupId>com.github.mike10004</groupId>
     <artifactId>http-capture</artifactId>
-    <version>0.1-SNAPSHOT</version>
+    <version>0.1</version>
     <modules>
         <module>http-capture-lib</module>
         <module>http-capture-exec</module>
@@ -147,6 +147,9 @@
                 <plugin>
                     <artifactId>maven-javadoc-plugin</artifactId>
                     <version>3.0.1</version>
+                    <configuration>
+                        <doclint>none</doclint>
+                    </configuration>
                 </plugin>
                 <plugin>
                     <artifactId>maven-install-plugin</artifactId>
